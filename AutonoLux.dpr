@@ -15,7 +15,13 @@ uses
   uAxelComun in 'Formas\uAxelComun.pas',
   uLogin in 'Formas\uLogin.pas' {frmLogin},
   uReporte in 'Formas\uReporte.pas' {frmReporte},
-  uAcerca in 'Formas\uAcerca.pas' {frmAcerca};
+  uAcerca in 'Formas\uAcerca.pas' {frmAcerca},
+  uCalcBase in 'Formas\uCalcBase.pas',
+  uCalcSergio in 'Formas\uCalcSergio.pas',
+  uCalcDaniel in 'Formas\uCalcDaniel.pas',
+  uCalcJesus in 'Formas\uCalcJesus.pas',
+  uCalcAxel in 'Formas\uCalcAxel.pas',
+  uVideo in 'Formas\uVideo.pas';
 
 begin
   Application.Initialize;

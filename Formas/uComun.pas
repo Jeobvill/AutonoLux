@@ -42,6 +42,14 @@ procedure ResumenReal(L: TStrings);
 procedure CargarCalor;
 procedure CargarConsumo;
 function NumeroTras(const Linea, Clave: string): Integer;
+{ Video del proyecto y entrevista (FormVideo) }
+const
+  { Enlace de la entrevista en EVA (assign id=72807). Si el dominio no es el de su plataforma,
+    pegue el enlace completo en Video\entrevista.txt y se usa ese. }
+  URL_ENTREVISTA = 'https://eva.ittepic.edu.mx/mod/assign/view.php?id=72807';
+function RutaTrailer: string;
+function UrlEntrevista: string;
+function AbrirArchivoOEnlace(const Destino: string): Boolean;
 function BuscarEmu(const Exe: string): string;
 function LanzarEmu(const Exe: string): Boolean;
 procedure LeerPersonasMapa(var Personas: array of Integer);
@@ -440,6 +448,65 @@ begin
   end;
   L.Add(Format('Consumo acumulado: %s kWh   costo $ %s', [FormatFloat('0.0000', kwh),
     FormatFloat('0.00', kwh * ConfigTarifa)]));
+end;
+
+{ Carpeta Video junto al programa, en la raiz del proyecto (..\Video, ..\..\Video) }
+function CarpetaVideo: string;
+const
+  REL: array[0..3] of string = ('Video\', '..\Video\', '..\..\Video\', '');
+var
+  i: Integer;
+  Base: string;
+begin
+  Base := ExtractFilePath(ParamStr(0));
+  Result := Base + 'Video\';
+  for i := 0 to High(REL) do
+    if DirectoryExists(Base + REL[i]) and (REL[i] <> '') then
+    begin
+      Result := ExpandFileName(Base + REL[i]);
+      Exit;
+    end;
+end;
+
+{ Trailer: Video\Trailer.mp4 (o .avi, .wmv, .mov, .mkv). Vacio si todavia no esta el archivo }
+function RutaTrailer: string;
+const
+  EXT: array[0..4] of string = ('.mp4', '.avi', '.wmv', '.mov', '.mkv');
+var
+  i: Integer;
+begin
+  for i := 0 to High(EXT) do
+    if FileExists(CarpetaVideo + 'Trailer' + EXT[i]) then
+    begin
+      Result := CarpetaVideo + 'Trailer' + EXT[i];
+      Exit;
+    end;
+  Result := '';
+end;
+
+{ Video\entrevista.txt (primera linea con http) sustituye al enlace de URL_ENTREVISTA }
+function UrlEntrevista: string;
+var
+  L: TStringList;
+begin
+  Result := URL_ENTREVISTA;
+  if not FileExists(CarpetaVideo + 'entrevista.txt') then Exit;
+  L := TStringList.Create;
+  try
+    try
+      L.LoadFromFile(CarpetaVideo + 'entrevista.txt');
+      if (L.Count > 0) and (Pos('http', LowerCase(Trim(L[0]))) = 1) then
+        Result := Trim(L[0]);
+    except
+    end;
+  finally
+    L.Free;
+  end;
+end;
+
+function AbrirArchivoOEnlace(const Destino: string): Boolean;
+begin
+  Result := ShellExecute(0, 'open', PChar(Destino), nil, nil, SW_SHOWNORMAL) > 32;
 end;
 
 { Un .exe de Emu8086 es un programa DOS de 16 bits: Windows moderno no lo ejecuta solo.

@@ -1,0 +1,5 @@
+Carpeta de video de AutonoLux (la usa el menu Ayuda > Trailer y entrevista).
+
+- Trailer: copie aqui el video con el nombre Trailer.mp4 (tambien se acepta .avi, .wmv, .mov o .mkv).
+- Entrevista: la app abre el enlace de EVA (assign id=72807). Si el dominio de su EVA es otro,
+  cree el archivo entrevista.txt en esta carpeta con el enlace completo en la primera linea.

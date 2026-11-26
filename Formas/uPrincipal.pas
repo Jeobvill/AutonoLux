@@ -47,6 +47,10 @@ type
   private
     FUsuario: string;
     TicksGuardado: Integer;
+    FMenusListos: Boolean;
+    procedure AgregarMenus;
+    procedure miCalcClick(Sender: TObject);
+    procedure miVideoClick(Sender: TObject);
     procedure PedirLogin;
     procedure RevisarLogin;
     procedure HabilitarMenu(Activo: Boolean);
@@ -59,7 +63,7 @@ implementation
 
 {$R *.dfm}
 
-uses uComun;
+uses uComun, uCalcSergio, uCalcDaniel, uCalcJesus, uCalcAxel, uVideo;
 
 procedure TfrmPrincipal.btn2Click(Sender: TObject);
 begin
@@ -147,8 +151,52 @@ begin
     Close;
 end;
 
+{ Menu Calculos (formularios del coprocesador) y Ayuda > Trailer y entrevista }
+procedure TfrmPrincipal.AgregarMenus;
+const
+  NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
+    'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
+var
+  Calc, Item: TMenuItem;
+  i: Integer;
+begin
+  if FMenusListos then Exit;
+  FMenusListos := True;
+  Calc := TMenuItem.Create(mmPrincipal);
+  Calc.Caption := 'C' + #225 + 'lculos';
+  for i := 0 to 3 do
+  begin
+    Item := TMenuItem.Create(mmPrincipal);
+    Item.Caption := NOMBRES[i];
+    Item.Tag := i;
+    Item.OnClick := miCalcClick;
+    Calc.Add(Item);
+  end;
+  mmPrincipal.Items.Insert(miAyuda.MenuIndex, Calc);
+  Item := TMenuItem.Create(mmPrincipal);
+  Item.Caption := 'Trailer y entrevista';
+  Item.OnClick := miVideoClick;
+  miAyuda.Add(Item);
+end;
+
+procedure TfrmPrincipal.miCalcClick(Sender: TObject);
+begin
+  case TMenuItem(Sender).Tag of
+    0: MostrarCalcSergio;
+    1: MostrarCalcDaniel;
+    2: MostrarCalcJesus;
+    3: MostrarCalcAxel;
+  end;
+end;
+
+procedure TfrmPrincipal.miVideoClick(Sender: TObject);
+begin
+  MostrarVideo;
+end;
+
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
+  AgregarMenus;
   CrearArbolCarpetas;
   CargarConsumo;
   CargarCalor;

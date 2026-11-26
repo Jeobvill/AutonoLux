@@ -8,6 +8,7 @@ uses Classes;
 
 function RutaArchivo(const Nombre: string): string;
 procedure CrearArbolCarpetas;
+procedure CrearDatosEjemplo;
 function BuscarEmu(const Exe: string): string;
 function LanzarEmu(const Exe: string): Boolean;
 procedure LeerPersonasMapa(var Personas: array of Integer);
@@ -76,6 +77,56 @@ begin
   ForceDirectories(RaizDatos + 'Jesus');
 end;
 
+{ Escribe un archivo de ejemplo solo si todavia no existe (nunca pisa datos reales) }
+procedure EscribirSiNoExiste(const Nombre: string; const Lineas: array of string);
+var
+  L: TStringList;
+  i: Integer;
+begin
+  if FileExists(RutaArchivo(Nombre)) then Exit;
+  L := TStringList.Create;
+  try
+    for i := 0 to High(Lineas) do
+      L.Add(Lineas[i]);
+    try
+      L.SaveToFile(RutaArchivo(Nombre));
+    except
+      { sin permiso de escritura: las pantallas quedan en blanco, sin error }
+    end;
+  finally
+    L.Free;
+  end;
+end;
+
+{ Datos de ejemplo para que las pantallas no salgan vacias antes de emular los .asm }
+procedure CrearDatosEjemplo;
+begin
+  EscribirSiNoExiste('config.txt', ['AforoMax=60', 'Temperatura=28']);
+  EscribirSiNoExiste('visitantes.txt', [
+    'Evento INICIO sala 000 entradas 000 salidas 000 pico 000',
+    'Evento ENTRA  sala 001 entradas 001 salidas 000 pico 001',
+    'Evento ENTRA  sala 002 entradas 002 salidas 000 pico 002',
+    'Evento ENTRA  sala 003 entradas 003 salidas 000 pico 003',
+    'Evento SALE   sala 002 entradas 003 salidas 001 pico 003']);
+  EscribirSiNoExiste('iluminacion.txt', [
+    'Zona 1 modo A luz 1 int 100%',
+    'Zona 2 modo M luz 1 int 080%',
+    'Zona 3 modo M luz 0 int 000%']);
+  EscribirSiNoExiste('zonas.txt', [
+    'Recepcion;Ocupada;5;ON;12:30',
+    'Lectura Silenciosa;Ocupada;3;ON;11:10',
+    'Sala de Computo;Libre;0;OFF;-',
+    'Hemeroteca;Ocupada;2;ON;09:45',
+    'Estantes A-F;Libre;0;OFF;-',
+    'Sala de Grupos;Ocupada;7;ON;13:05']);
+  EscribirSiNoExiste('bitacora.txt', [
+    '08:00;Recepcion;Luz ON;admin',
+    '08:15;Lectura Silenciosa;Luz ON;admin',
+    '09:45;Hemeroteca;Luz ON;admin',
+    '11:10;Sala de Computo;Luz OFF;admin',
+    '12:30;Recepcion;Zona ocupada;admin']);
+end;
+
 { Un .exe de Emu8086 es un programa DOS de 16 bits: Windows moderno no lo ejecuta solo.
   Por eso Delphi busca el .asm del mismo nombre (junto al programa, en Emu8086, ..\Emu8086
   o ..\..\Emu8086) y lo abre en emu8086, donde se emula con sus devices. }
@@ -104,6 +155,34 @@ begin
     Result := CarpetaEmu + 'emu8086.exe';
 end;
 
+{ Abre el .asm en emu8086 y, si AUTO_EMULAR, manda F5 (Emulate) para que compile y corra
+  sin que el usuario toque nada. F5 es el atajo de "emulate" en emu8086. }
+procedure AbrirYEmular(const Emu, Ruta: string);
+const
+  AUTO_EMULAR = True;
+var
+  Info: TShellExecuteInfo;
+begin
+  FillChar(Info, SizeOf(Info), 0);
+  Info.cbSize := SizeOf(Info);
+  Info.fMask := SEE_MASK_NOCLOSEPROCESS;
+  Info.lpVerb := 'open';
+  Info.lpFile := PChar(Emu);
+  Info.lpParameters := PChar('"' + Ruta + '"');
+  Info.lpDirectory := PChar(ExtractFilePath(Emu));
+  Info.nShow := SW_SHOWNORMAL;
+  if not ShellExecuteEx(@Info) then Exit;
+  if AUTO_EMULAR and (Info.hProcess <> 0) then
+  begin
+    WaitForInputIdle(Info.hProcess, 10000);   { espera a que emu8086 termine de abrir }
+    Sleep(1500);                              { y de cargar el archivo }
+    keybd_event(VK_F5, 0, 0, 0);
+    keybd_event(VK_F5, 0, KEYEVENTF_KEYUP, 0);
+  end;
+  if Info.hProcess <> 0 then
+    CloseHandle(Info.hProcess);
+end;
+
 { True si se abrio el programa en emu8086; las pantallas Delphi solo llaman y Emu ejecuta }
 function LanzarEmu(const Exe: string): Boolean;
 var
@@ -118,8 +197,7 @@ begin
   end;
   Emu := BuscarEmulador;
   if Emu <> '' then
-    ShellExecute(0, 'open', PChar(Emu), PChar('"' + Ruta + '"'),
-      PChar(ExtractFilePath(Emu)), SW_SHOWNORMAL)
+    AbrirYEmular(Emu, Ruta)
   else   { emu8086 no esta en las rutas conocidas: lo abre Windows por asociacion }
     ShellExecute(0, 'open', PChar(Ruta), nil, PChar(ExtractFilePath(Ruta)), SW_SHOWNORMAL);
 end;

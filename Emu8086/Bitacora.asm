@@ -69,6 +69,8 @@ TextoPedirFiltro       DB "Filtrar zona [0=todas, 1-6]: "
 MensajeBitacoraLlena   DB "Bitacora llena (24 registros). Presione una tecla."
 MensajeRondaSinLugar   DB "No caben 6 registros mas para la ronda. Presione una tecla."
 MensajeRondaTerminada  DB "Ronda terminada: 6 zonas verificadas. Presione una tecla."
+MensajeRondaCancelada  DB "Ronda detenida con ESC. Presione una tecla."
+MensajeRondaEnCurso    DB "Robot en ronda... ESC para detenerlo"
 MensajeImpresa         DB "Bitacora enviada a la impresora. Presione una tecla."
 MensajeErrorArchivo    DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
@@ -578,7 +580,16 @@ RondaDelRobot PROC
 RondaHayLugar:
     MOV TipoDeEvento,'R'
     MOV ZonaDelEvento,'1'
+    IMPCAD_COLOR MensajeRondaEnCurso,36,21,3,0,0,1Eh
 RondaSiguienteZona:
+    MOV AH,1                    ; INT 16h/1: hay tecla en el buffer?
+    INT 16H
+    JZ RondaSinTecla
+    MOV AH,0
+    INT 16H
+    CMP AL,27                   ; ESC detiene al Robot
+    JE RondaCancelada
+RondaSinTecla:
     MOV AL,4                    ; 4 = examinar lo que hay enfrente
     CALL EnviarComandoRobot
     MOV DX,10
@@ -603,6 +614,14 @@ RondaAvanzar:
     IMPCAD_COLOR MensajeRondaTerminada,57,21,3,0,0,1Ah
     RASTREO
     RET
+RondaCancelada:
+    MOV AL,6                    ; 6 = apagar la lampara antes de parar
+    CALL EnviarComandoRobot
+    MOV TipoDeEvento,'M'
+    CALL CargarBitacora
+    IMPCAD_COLOR MensajeRondaCancelada,43,21,3,0,0,1Ch
+    RASTREO
+    RET
 RondaDelRobot ENDP
 
 ; Entrada: AL = comando. Puerto 9 = comando, puerto 10 = dato, puerto 11 = estado
@@ -621,6 +640,8 @@ EnviarComandoRobot ENDP
 
 ; Espera hasta que el bit 1 (ocupado) del puerto 11 sea 0
 EsperarRobotLibre PROC
+    PUSH SI
+    MOV SI,60000                ; limite: nunca se queda esperando para siempre
 RobotLeerEstado:
     MOV DX,11
     IN AL,DX
@@ -629,7 +650,12 @@ RobotLeerEstado:
     SUB AL,4                    ; se quita el bit 2 (comando fallido)
 RobotSinBit2:
     CMP AL,2
-    JNC RobotLeerEstado         ; 2 o 3: bit 1 encendido, sigue ocupado
+    JC RobotLibre               ; bit 1 apagado: ya no esta ocupado
+    SUB SI,1
+    CMP SI,0
+    JNE RobotLeerEstado         ; 2 o 3: bit 1 encendido, sigue ocupado
+RobotLibre:
+    POP SI
     RET
 EsperarRobotLibre ENDP
 

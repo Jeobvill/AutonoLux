@@ -635,7 +635,7 @@ EsperarRobotLibre ENDP
 
 ; Pausa corta para que el Robot alcance a empezar el comando
 EsperarUnMomento PROC
-    MOV CX,20000
+    MOV CX,300
 EsperarVuelta:
     SUB CX,1
     CMP CX,0

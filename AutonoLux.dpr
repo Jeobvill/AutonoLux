@@ -7,7 +7,10 @@ uses
   uConsumo in 'uConsumo.pas' {frmConsumo},
   uIluminacion in 'uIluminacion.pas' {frmIluminacion},
   uContador in 'uContador.pas' {frmContador},
-  uMapa in 'uMapa.pas' {frmMapa};
+  uMapa in 'uMapa.pas' {frmMapa},
+  uComun in 'uComun.pas',
+  uMonitor in 'uMonitor.pas' {frmMonitor},
+  uBitacora in 'uBitacora.pas' {frmBitacora};
 
 begin
   Application.Initialize;
@@ -17,5 +20,7 @@ begin
   Application.CreateForm(TfrmIluminacion, frmIluminacion);
   Application.CreateForm(TfrmContador, frmContador);
   Application.CreateForm(TfrmMapa, frmMapa);
+  Application.CreateForm(TfrmMonitor, frmMonitor);
+  Application.CreateForm(TfrmBitacora, frmBitacora);
   Application.Run;
 end.

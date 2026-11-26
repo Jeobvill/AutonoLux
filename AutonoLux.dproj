@@ -113,6 +113,13 @@
         <DCCReference Include="uMapa.pas">
             <Form>frmMapa</Form>
         </DCCReference>
+        <DCCReference Include="uComun.pas"/>
+        <DCCReference Include="uMonitor.pas">
+            <Form>frmMonitor</Form>
+        </DCCReference>
+        <DCCReference Include="uBitacora.pas">
+            <Form>frmBitacora</Form>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

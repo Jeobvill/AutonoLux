@@ -50,6 +50,7 @@ const
   { Enlace de la entrevista en EVA (assign id=72807). Si el dominio no es el de su plataforma,
     pegue el enlace completo en Video\entrevista.txt y se usa ese. }
   URL_ENTREVISTA = 'https://eva.ittepic.edu.mx/mod/assign/view.php?id=72807';
+function CarpetaVideo: string;
 function RutaEntrevista: string;
 function UrlEntrevista: string;
 function AbrirArchivoOEnlace(const Destino: string): Boolean;

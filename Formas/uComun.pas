@@ -44,10 +44,12 @@ procedure CargarConsumo;
 function NumeroTras(const Linea, Clave: string): Integer;
 { Video del proyecto y entrevista (FormVideo) }
 const
+  { Trailer del proyecto (en linea) }
+  URL_TRAILER = 'https://app.heygen.com/videos/autonolux-iluminaci-n-inteligente-c7234b38512944d89b131b4a3b7081f3';
   { Enlace de la entrevista en EVA (assign id=72807). Si el dominio no es el de su plataforma,
     pegue el enlace completo en Video\entrevista.txt y se usa ese. }
   URL_ENTREVISTA = 'https://eva.ittepic.edu.mx/mod/assign/view.php?id=72807';
-function RutaTrailer: string;
+function RutaEntrevista: string;
 function UrlEntrevista: string;
 function AbrirArchivoOEnlace(const Destino: string): Boolean;
 function BuscarEmu(const Exe: string): string;
@@ -468,17 +470,18 @@ begin
     end;
 end;
 
-{ Trailer: Video\Trailer.mp4 (o .avi, .wmv, .mov, .mkv). Vacio si todavia no esta el archivo }
-function RutaTrailer: string;
+{ La entrevista pesa mas de 100 MB y no se sube a GitHub: se copia a mano como Video\Entrevista.mp4
+  (o .avi, .wmv, .mov, .mkv). Vacio si todavia no esta el archivo }
+function RutaEntrevista: string;
 const
   EXT: array[0..4] of string = ('.mp4', '.avi', '.wmv', '.mov', '.mkv');
 var
   i: Integer;
 begin
   for i := 0 to High(EXT) do
-    if FileExists(CarpetaVideo + 'Trailer' + EXT[i]) then
+    if FileExists(CarpetaVideo + 'Entrevista' + EXT[i]) then
     begin
-      Result := CarpetaVideo + 'Trailer' + EXT[i];
+      Result := CarpetaVideo + 'Entrevista' + EXT[i];
       Exit;
     end;
   Result := '';

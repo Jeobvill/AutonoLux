@@ -41,10 +41,10 @@ TextoAcerca       DB "+=========================================================
                   DB "|  Modulos      : Login, Menu, Monitor, Mapa, Iluminacion, Contador,       |",13,10
                   DB "|                 Mapa de calor, Consumo, Reporte, Config., Bitacora       |",13,10
                   DB "|--------------------------------------------------------------------------|",13,10
-                  DB "|  Integrantes  : Altamirano Murillo Axel Gabriel  (Login, Reporte, Acerca)|",13,10
-                  DB "|                 Diaz Robles Sergio  (Menu, Config., Consumo)             |",13,10
-                  DB "|                 Veliz Partida Daniel  (Monitor, Calor, Bitacora)         |",13,10
-                  DB "|                 Villa Campos Jesus Obed  (Mapa, Ilum., Contador)         |",13,10
+                  DB "|  Integrantes  : Altamirano Murillo Axel   axgaaltamiranomu@ittepic.edu.mx|",13,10
+                  DB "|                 Diaz Robles Sergio        sediazro@ittepic.edu.mx        |",13,10
+                  DB "|                 Veliz Partida Daniel      davelizpa@ittepic.edu.mx       |",13,10
+                  DB "|                 Villa Campos Jesus Obed   jeobvillaca@ittepic.edu.mx     |",13,10
                   DB "|  Institucion  : Instituto Tecnologico de Tepic, 2026                     |",13,10
                   DB "| [ESC] Volver                                                             |",13,10
                   DB "+==========================================================================+",13,10

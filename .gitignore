@@ -10,3 +10,10 @@ Win32/
 Win64/
 # Ejecutables generados
 Imagenes/AutonoLux.exe
+
+# Videos pesados (la entrevista pasa de 100 MB): se copian a mano
+Video/*.mp4
+Video/*.avi
+Video/*.wmv
+Video/*.mov
+Video/*.mkv

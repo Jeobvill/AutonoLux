@@ -78,29 +78,31 @@ begin
   FInfo.SetBounds(100, 205, 400, 70);
   FInfo.Font.Color := COLOR_TEXTO;
   FInfo.Font.Size := 9;
-  FInfo.Caption := 'El trailer se busca como Video\Trailer.mp4 junto al proyecto.' + #13 +
-    'La entrevista abre el enlace de EVA (assign id=72807).';
+  FInfo.Caption := 'El trailer se abre en linea (HeyGen).' + #13 +
+    'La entrevista abre Video\Entrevista.mp4 si esta en esta computadora; si no, el enlace de EVA.';
 end;
 
 procedure TfrmVideo.BtnTrailerClick(Sender: TObject);
+begin
+  FInfo.Caption := 'Abriendo el trailer en el navegador...';
+  if not AbrirArchivoOEnlace(URL_TRAILER) then
+    FInfo.Caption := 'No se pudo abrir el enlace: ' + URL_TRAILER;
+end;
+
+{ Entrevista: archivo local si esta en la carpeta Video; si no, el enlace de EVA }
+procedure TfrmVideo.BtnEntrevistaClick(Sender: TObject);
 var
   R: string;
 begin
-  R := RutaTrailer;
-  if R = '' then
+  R := RutaEntrevista;
+  if R <> '' then
   begin
-    FInfo.Caption := 'No se encontro el trailer. Copie el video como Trailer.mp4 en la carpeta: ' +
-      ExtractFilePath(ParamStr(0)) + 'Video\';
+    FInfo.Caption := 'Abriendo: ' + R;
+    if not AbrirArchivoOEnlace(R) then
+      FInfo.Caption := 'Windows no pudo abrir el video: ' + R;
     Exit;
   end;
-  FInfo.Caption := 'Abriendo: ' + R;
-  if not AbrirArchivoOEnlace(R) then
-    FInfo.Caption := 'Windows no pudo abrir el video: ' + R;
-end;
-
-procedure TfrmVideo.BtnEntrevistaClick(Sender: TObject);
-begin
-  FInfo.Caption := 'Abriendo: ' + UrlEntrevista;
+  FInfo.Caption := 'No hay Video\Entrevista.mp4 en esta computadora; se abre el enlace de EVA: ' + UrlEntrevista;
   if not AbrirArchivoOEnlace(UrlEntrevista) then
     FInfo.Caption := 'No se pudo abrir el enlace: ' + UrlEntrevista;
 end;

@@ -1,5 +1,6 @@
 Carpeta de video de AutonoLux (la usa el menu Ayuda > Trailer y entrevista).
 
-- Trailer: copie aqui el video con el nombre Trailer.mp4 (tambien se acepta .avi, .wmv, .mov o .mkv).
-- Entrevista: la app abre el enlace de EVA (assign id=72807). Si el dominio de su EVA es otro,
-  cree el archivo entrevista.txt en esta carpeta con el enlace completo en la primera linea.
+- Trailer: se abre en linea (HeyGen), no hace falta ningun archivo.
+- Entrevista: pesa mas de 100 MB y NO se sube a GitHub. Copie el video a mano en esta carpeta como
+  Entrevista.mp4 (tambien .avi, .wmv, .mov o .mkv). Si no esta, el boton abre el enlace de EVA (assign id=72807).
+  Si el dominio de su EVA es otro, cree entrevista.txt aqui con el enlace completo en la primera linea.

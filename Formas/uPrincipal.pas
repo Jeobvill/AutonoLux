@@ -195,7 +195,11 @@ begin
   { botones pequenos debajo del logo y del titulo }
   NuevoPanel('Coprocesador', 40, 414, 135, btnCalcClick);
   NuevoPanel('Trailer / Entrevista', 185, 414, 135, miVideoClick);
-  NuevoPanel('Visor de archivos .txt', 40, 443, 280, miVisorClick);
+  NuevoPanel('Visor de archivos .txt', 40, 443, 135, miVisorClick);
+  NuevoPanel('Autor' + #237 + 'a', 185, 443, 135, miAutoriaClick);
+  { sin barra de menu ni barra de estado: todo se abre con los botones }
+  Menu := nil;
+  sbEstado.Visible := False;
   { Ayuda -> Visor de archivos de texto y Autoria de archivos }
   Item := TMenuItem.Create(mmPrincipal);
   Item.Caption := 'Visor de archivos de texto';

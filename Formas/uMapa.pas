@@ -50,10 +50,6 @@ uses uComun;
 const
   NOMBRES: array[0..5] of string = ('Recepcion', 'Lectura Silenciosa',
     'Sala de Computo', 'Hemeroteca', 'Estantes A-F', 'Sala de Grupos');
-  { Lugar de cada zona dentro de mapa.txt (renglon base 0 y columna base 1) }
-  RENGLON: array[0..5] of Integer = (11, 11, 11, 16, 16, 16);
-  COLUMNA_MARCA: array[0..5] of Integer = (9, 33, 57, 9, 33, 57);
-  COLUMNA_PERSONAS: array[0..5] of Integer = (15, 39, 63, 15, 39, 63);
 
 procedure TfrmMapa.FormShow(Sender: TObject);
 begin
@@ -76,22 +72,8 @@ end;
 
 { Cada zona tiene [#] u [ ] y un numero de personas en su renglon de mapa.txt }
 procedure TfrmMapa.LeerMapa;
-var
-  L: TStringList;
-  i: Integer;
 begin
-  for i := 0 to 5 do
-    Personas[i] := 0;
-  L := TStringList.Create;
-  try
-    if CargarLineas('mapa.txt', L) then
-      for i := 0 to 5 do
-        if RENGLON[i] < L.Count then
-          Personas[i] := StrToIntDef(
-            Trim(Copy(L[RENGLON[i]], COLUMNA_PERSONAS[i], 3)), 0);
-  finally
-    L.Free;
-  end;
+  LeerPersonasMapa(Personas);
 end;
 
 procedure TfrmMapa.PintarZonas;

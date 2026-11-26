@@ -80,6 +80,7 @@ var
   L: TStringList;
   i, z, encendidas: Integer;
   modo: string;
+  personas: array[0..5] of Integer;
 begin
   for z := 1 to 6 do
   begin
@@ -88,6 +89,10 @@ begin
     sgLuces.Cells[4, z] := '100%';
   end;
   modo := 'A';
+  LeerPersonasMapa(personas);      { en AUTO la luz sigue a la presencia del mapa }
+  for z := 1 to 6 do
+    if personas[z - 1] > 0 then
+      sgLuces.Cells[2, z] := 'ON';
   lblUltimo.Caption := 'Ultimo cambio: -';
   L := TStringList.Create;
   try
@@ -98,7 +103,15 @@ begin
         z := StrToIntDef(ValorDe(L[i], 'Zona'), 0);
         if (z < 1) or (z > 6) then Continue;
         modo := ValorDe(L[i], 'modo');
-        if ValorDe(L[i], 'luz') = '1' then
+        { MANUAL manda la luz del registro; AUTO sigue a la presencia del mapa }
+        if modo = 'M' then
+        begin
+          if ValorDe(L[i], 'luz') = '1' then
+            sgLuces.Cells[2, z] := 'ON'
+          else
+            sgLuces.Cells[2, z] := 'OFF';
+        end
+        else if personas[z - 1] > 0 then
           sgLuces.Cells[2, z] := 'ON'
         else
           sgLuces.Cells[2, z] := 'OFF';

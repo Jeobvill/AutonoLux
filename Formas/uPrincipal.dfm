@@ -14,6 +14,7 @@ object frmPrincipal: TfrmPrincipal
   Font.Style = []
   Menu = mmPrincipal
   Position = poScreenCenter
+  OnShow = FormShow
   TextHeight = 17
   object imgLogo: TImage
     Left = 40
@@ -7424,6 +7425,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 0
+    OnClick = btn1Click
   end
   object btn2: TPanel
     Left = 360
@@ -7477,6 +7479,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 3
+    OnClick = btn4Click
   end
   object btn5: TPanel
     Left = 360
@@ -7512,6 +7515,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 5
+    OnClick = btn6Click
   end
   object btn7: TPanel
     Left = 360
@@ -7547,6 +7551,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 7
+    OnClick = btn8Click
   end
   object btn9: TPanel
     Left = 360
@@ -7564,6 +7569,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 8
+    OnClick = btn9Click
   end
   object btn0: TPanel
     Left = 360
@@ -7581,6 +7587,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 9
+    OnClick = btn0Click
   end
   object sbEstado: TStatusBar
     Left = 0
@@ -7601,6 +7608,7 @@ object frmPrincipal: TfrmPrincipal
     ExplicitWidth = 778
   end
   object tmrHora: TTimer
+    OnTimer = tmrHoraTimer
     Left = 24
     Top = 400
   end
@@ -7611,6 +7619,7 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'Archivo'
       object miSalir: TMenuItem
         Caption = 'Salir'
+        OnClick = miSalirClick
       end
     end
     object miAyuda: TMenuItem

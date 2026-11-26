@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, ComCtrls, Menus, uConsumo, uConfiguracion, uIluminacion, uContador, uMonitor,
-  uBitacora, uMapa, uCalor;
+  uBitacora, uMapa, uCalor, uLogin, uReporte, uAcerca;
 
 type
   TfrmPrincipal = class(TForm)
@@ -43,6 +43,7 @@ type
     procedure btn0Click(Sender: TObject);
     procedure miSalirClick(Sender: TObject);
     procedure lblSesionDblClick(Sender: TObject);
+    procedure miAcercaDeClick(Sender: TObject);
   private
     FUsuario: string;
     procedure PedirLogin;
@@ -98,19 +99,21 @@ begin
       TPanel(Components[i]).Enabled := Activo;
 end;
 
+{ El acceso lo valida la pantalla Login contra usuarios.txt (el mismo que crea Login.asm) }
 procedure TfrmPrincipal.PedirLogin;
 begin
   FUsuario := '';
-  lblSesion.Caption := 'Sesion: sin iniciar (login en emu8086)';
-  HabilitarMenu(True);
-  DeleteFile(RutaArchivo('login_out.txt'));   { evita leer un acceso viejo }
-  if (BuscarEmu('Login.exe') = '') or not LanzarEmu('Login.exe') then
+  lblSesion.Caption := 'Sesion: sin iniciar';
+  HabilitarMenu(False);
+  frmLogin.Preparar;
+  if frmLogin.ShowModal = mrOk then
   begin
-    { sin Login.asm junto al proyecto el sistema abre en modo demostracion }
-    FUsuario := 'DEMO';
-    lblSesion.Caption := 'Sesion: DEMO (sin Login.asm)';
+    FUsuario := frmLogin.Usuario;
+    lblSesion.Caption := 'Sesion: ' + FUsuario;
     HabilitarMenu(True);
-  end;
+  end
+  else
+    Close;
 end;
 
 { Cada segundo: reloj y, mientras no hay sesion, lectura de login_out.txt }
@@ -173,7 +176,7 @@ end;
 
 procedure TfrmPrincipal.btn6Click(Sender: TObject);
 begin
-  LanzarEmu('Reporte.exe');      { uReporte (Axel) todavia no existe }
+  frmReporte.ShowModal;
 end;
 
 procedure TfrmPrincipal.btn8Click(Sender: TObject);
@@ -183,7 +186,7 @@ end;
 
 procedure TfrmPrincipal.btn9Click(Sender: TObject);
 begin
-  LanzarEmu('Acerca.exe');       { uAcerca (Axel) todavia no existe }
+  frmAcerca.ShowModal;
 end;
 
 procedure TfrmPrincipal.btn0Click(Sender: TObject);
@@ -198,6 +201,11 @@ begin
   FUsuario := 'DEMO';
   lblSesion.Caption := 'Sesion: DEMO';
   HabilitarMenu(True);
+end;
+
+procedure TfrmPrincipal.miAcercaDeClick(Sender: TObject);
+begin
+  frmAcerca.ShowModal;
 end;
 
 procedure TfrmPrincipal.miSalirClick(Sender: TObject);

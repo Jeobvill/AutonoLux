@@ -11,7 +11,11 @@ uses
   uComun in 'Formas\uComun.pas',
   uMonitor in 'Formas\uMonitor.pas' {frmMonitor},
   uCalor in 'Formas\uCalor.pas' {frmCalor},
-  uBitacora in 'Formas\uBitacora.pas' {frmBitacora};
+  uBitacora in 'Formas\uBitacora.pas' {frmBitacora},
+  uAxelComun in 'Formas\uAxelComun.pas',
+  uLogin in 'Formas\uLogin.pas' {frmLogin},
+  uReporte in 'Formas\uReporte.pas' {frmReporte},
+  uAcerca in 'Formas\uAcerca.pas' {frmAcerca};
 
 begin
   Application.Initialize;
@@ -24,5 +28,8 @@ begin
   Application.CreateForm(TfrmMonitor, frmMonitor);
   Application.CreateForm(TfrmCalor, frmCalor);
   Application.CreateForm(TfrmBitacora, frmBitacora);
+  Application.CreateForm(TfrmLogin, frmLogin);
+  Application.CreateForm(TfrmReporte, frmReporte);
+  Application.CreateForm(TfrmAcerca, frmAcerca);
   Application.Run;
 end.

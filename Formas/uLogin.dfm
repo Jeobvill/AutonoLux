@@ -1742,6 +1742,7 @@ object frmLogin: TfrmLogin
     Width = 140
     Height = 45
     Cancel = True
+    ModalResult = 2
     Caption = 'Salir'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

@@ -101,6 +101,7 @@ end;
 { Datos de ejemplo para que las pantallas no salgan vacias antes de emular los .asm }
 procedure CrearDatosEjemplo;
 begin
+  EscribirSiNoExiste('usuarios.txt', ['ADMIN,1234']);
   EscribirSiNoExiste('config.txt', ['AforoMax=60', 'Temperatura=28']);
   EscribirSiNoExiste('visitantes.txt', [
     'Evento INICIO sala 000 entradas 000 salidas 000 pico 000',

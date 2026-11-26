@@ -40,7 +40,14 @@ begin
   if FileExists(ARCH_ACERCA) then
     mmAcerca.Lines.LoadFromFile(ARCH_ACERCA)
   else
-    mmAcerca.Lines.Text := 'No se encontró ' + ARCH_ACERCA;
+    mmAcerca.Lines.Text :=
+      'AutonoLux - Deteccion y control de iluminacion' + sLineBreak +
+      'Lenguajes de Interfaz - Instituto Tecnologico de Tepic, 2026' + sLineBreak + sLineBreak +
+      'Integrantes:' + sLineBreak +
+      '  Altamirano Murillo Axel Gabriel' + sLineBreak +
+      '  Veliz Partida Daniel' + sLineBreak +
+      '  Diaz Robles Sergio' + sLineBreak +
+      '  Villa Campos Jesus Obed';
 end;
 
 end.

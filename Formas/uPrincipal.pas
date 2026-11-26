@@ -159,18 +159,17 @@ const
   NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
     'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
 
-  function NuevoPanel(const Texto: string; X: Integer; Evento: TNotifyEvent): TPanel;
+  function NuevoPanel(const Texto: string; Evento: TNotifyEvent): TPanel;
   begin
     Result := TPanel.Create(Self);
     Result.Parent := Self;
-    Result.SetBounds(X, 416, 135, 38);
     Result.Caption := Texto;
     Result.Color := btn0.Color;
     Result.ParentBackground := False;
-    Result.Font.Name := 'Segoe UI';
+    Result.Font.Name := btn0.Font.Name;
     Result.Font.Color := btn0.Font.Color;
-    Result.Font.Size := 10;
-    Result.Font.Style := [fsBold];
+    Result.Font.Height := btn0.Font.Height;
+    Result.Font.Style := btn0.Font.Style;
     Result.Cursor := crHandPoint;
     Result.OnClick := Evento;
   end;
@@ -178,6 +177,7 @@ const
 var
   Item: TMenuItem;
   i: Integer;
+  Botones: array[0..11] of TPanel;
 begin
   if FMenusListos then Exit;
   FMenusListos := True;
@@ -190,8 +190,15 @@ begin
     Item.OnClick := miCalcClick;
     FPopCalc.Items.Add(Item);
   end;
-  NuevoPanel('Coprocesador', 40, btnCalcClick);
-  NuevoPanel('Trailer / Entrevista', 185, miVideoClick);
+  Botones[0] := btn1;  Botones[1] := btn2;  Botones[2] := btn3;
+  Botones[3] := btn4;  Botones[4] := btn5;  Botones[5] := btn6;
+  Botones[6] := btn7;  Botones[7] := btn8;  Botones[8] := btn9;
+  Botones[9] := NuevoPanel('[10] Coprocesador (c' + #225 + 'lculos)', btnCalcClick);
+  Botones[10] := NuevoPanel('[11] Trailer y entrevista', miVideoClick);
+  Botones[11] := btn0;
+  { 12 botones con el mismo estilo, repartidos en la columna derecha }
+  for i := 0 to 11 do
+    Botones[i].SetBounds(btn1.Left, 14 + i * 38, btn1.Width, 33);
 end;
 
 procedure TfrmPrincipal.btnCalcClick(Sender: TObject);

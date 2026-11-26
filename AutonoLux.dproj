@@ -104,6 +104,15 @@
         <DCCReference Include="uConsumo.pas">
             <Form>frmConsumo</Form>
         </DCCReference>
+        <DCCReference Include="uIluminacion.pas">
+            <Form>frmIluminacion</Form>
+        </DCCReference>
+        <DCCReference Include="uContador.pas">
+            <Form>frmContador</Form>
+        </DCCReference>
+        <DCCReference Include="uMapa.pas">
+            <Form>frmMapa</Form>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

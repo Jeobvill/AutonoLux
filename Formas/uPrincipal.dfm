@@ -7441,6 +7441,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 1
+    OnClick = btn2Click
   end
   object btn3: TPanel
     Left = 360
@@ -7458,6 +7459,7 @@ object frmPrincipal: TfrmPrincipal
     ParentBackground = False
     ParentFont = False
     TabOrder = 2
+    OnClick = btn3Click
   end
   object btn4: TPanel
     Left = 360

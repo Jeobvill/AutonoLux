@@ -48,6 +48,8 @@ type
     FUsuario: string;
     TicksGuardado: Integer;
     FMenusListos: Boolean;
+    FPopCalc: TPopupMenu;
+    procedure btnCalcClick(Sender: TObject);
     procedure AgregarMenus;
     procedure miCalcClick(Sender: TObject);
     procedure miVideoClick(Sender: TObject);
@@ -156,34 +158,48 @@ procedure TfrmPrincipal.AgregarMenus;
 const
   NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
     'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
+
+  function NuevoPanel(const Texto: string; X: Integer; Evento: TNotifyEvent): TPanel;
+  begin
+    Result := TPanel.Create(Self);
+    Result.Parent := Self;
+    Result.SetBounds(X, 416, 135, 38);
+    Result.Caption := Texto;
+    Result.Color := btn0.Color;
+    Result.ParentBackground := False;
+    Result.Font.Name := 'Segoe UI';
+    Result.Font.Color := btn0.Font.Color;
+    Result.Font.Size := 10;
+    Result.Font.Style := [fsBold];
+    Result.Cursor := crHandPoint;
+    Result.OnClick := Evento;
+  end;
+
 var
-  Calc, Vid, Item: TMenuItem;
+  Item: TMenuItem;
   i: Integer;
 begin
   if FMenusListos then Exit;
   FMenusListos := True;
-  Calc := TMenuItem.Create(mmPrincipal);
-  Calc.Caption := 'C' + #225 + 'lculos';
+  FPopCalc := TPopupMenu.Create(Self);
   for i := 0 to 3 do
   begin
-    Item := TMenuItem.Create(mmPrincipal);
+    Item := TMenuItem.Create(FPopCalc);
     Item.Caption := NOMBRES[i];
     Item.Tag := i;
     Item.OnClick := miCalcClick;
-    Calc.Add(Item);
+    FPopCalc.Items.Add(Item);
   end;
-  mmPrincipal.Items.Insert(miAyuda.MenuIndex, Calc);
-  Vid := TMenuItem.Create(mmPrincipal);
-  Vid.Caption := 'Video';
-  Item := TMenuItem.Create(mmPrincipal);
-  Item.Caption := 'Trailer y entrevista';
-  Item.OnClick := miVideoClick;
-  Vid.Add(Item);
-  mmPrincipal.Items.Insert(miAyuda.MenuIndex, Vid);
-  Item := TMenuItem.Create(mmPrincipal);
-  Item.Caption := 'Trailer y entrevista';
-  Item.OnClick := miVideoClick;
-  miAyuda.Add(Item);
+  NuevoPanel('Coprocesador', 40, btnCalcClick);
+  NuevoPanel('Trailer / Entrevista', 185, miVideoClick);
+end;
+
+procedure TfrmPrincipal.btnCalcClick(Sender: TObject);
+var
+  P: TPoint;
+begin
+  P := TControl(Sender).ClientToScreen(Point(0, TControl(Sender).Height));
+  FPopCalc.Popup(P.X, P.Y);
 end;
 
 procedure TfrmPrincipal.miCalcClick(Sender: TObject);

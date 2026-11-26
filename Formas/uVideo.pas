@@ -68,7 +68,7 @@ begin
   T.Font.Style := [fsBold];
 
   NuevoBoton(Self, 'Trailer del proyecto', 70, BtnTrailerClick);
-  NuevoBoton(Self, 'Entrevista (EVA)', 140, BtnEntrevistaClick);
+  NuevoBoton(Self, 'Entrevista (video)', 140, BtnEntrevistaClick);
   NuevoBoton(Self, 'Cerrar', 290, BtnCerrarClick);
 
   FInfo := TLabel.Create(Self);
@@ -79,7 +79,7 @@ begin
   FInfo.Font.Color := COLOR_TEXTO;
   FInfo.Font.Size := 9;
   FInfo.Caption := 'El trailer se abre en linea (HeyGen).' + #13 +
-    'La entrevista abre Video\Entrevista.mp4 si esta en esta computadora; si no, el enlace de EVA.';
+    'La entrevista se reproduce desde Video\Entrevista.mp4 (carpeta Video junto al programa).';
 end;
 
 procedure TfrmVideo.BtnTrailerClick(Sender: TObject);
@@ -102,9 +102,7 @@ begin
       FInfo.Caption := 'Windows no pudo abrir el video: ' + R;
     Exit;
   end;
-  FInfo.Caption := 'No hay Video\Entrevista.mp4 en esta computadora; se abre el enlace de EVA: ' + UrlEntrevista;
-  if not AbrirArchivoOEnlace(UrlEntrevista) then
-    FInfo.Caption := 'No se pudo abrir el enlace: ' + UrlEntrevista;
+  FInfo.Caption := 'Falta el archivo de la entrevista. Copielo como: ' + CarpetaVideo + 'Entrevista.mp4';
 end;
 
 procedure TfrmVideo.BtnCerrarClick(Sender: TObject);

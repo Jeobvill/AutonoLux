@@ -10,6 +10,7 @@ uses
   uMapa in 'uMapa.pas' {frmMapa},
   uComun in 'uComun.pas',
   uMonitor in 'uMonitor.pas' {frmMonitor},
+  uCalor in 'uCalor.pas' {frmCalor},
   uBitacora in 'uBitacora.pas' {frmBitacora};
 
 begin
@@ -21,6 +22,7 @@ begin
   Application.CreateForm(TfrmContador, frmContador);
   Application.CreateForm(TfrmMapa, frmMapa);
   Application.CreateForm(TfrmMonitor, frmMonitor);
+  Application.CreateForm(TfrmCalor, frmCalor);
   Application.CreateForm(TfrmBitacora, frmBitacora);
   Application.Run;
 end.

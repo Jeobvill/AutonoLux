@@ -68,6 +68,7 @@ end;
 
 procedure TfrmContador.tmrRefreshTimer(Sender: TObject);
 begin
+  if (Sender <> nil) and not Visible then Exit;   { solo trabaja con la pantalla abierta }
   ActualizarContador;
 end;
 

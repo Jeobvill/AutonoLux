@@ -23,6 +23,7 @@ type
     btnVerEmu: TPanel;
     btnVolver: TPanel;
     tmrRefresh: TTimer;
+    procedure FormCreate(Sender: TObject);
     procedure FormShow(Sender: TObject);
     procedure tmrRefreshTimer(Sender: TObject);
     procedure pnlZonaClick(Sender: TObject);
@@ -51,7 +52,7 @@ const
   NOMBRES: array[0..5] of string = ('Recepcion', 'Lectura Silenciosa',
     'Sala de Computo', 'Hemeroteca', 'Estantes A-F', 'Sala de Grupos');
 
-procedure TfrmMapa.FormShow(Sender: TObject);
+procedure TfrmMapa.FormCreate(Sender: TObject);
 begin
   Zonas[0] := pnlZona1;
   Zonas[1] := pnlZona2;
@@ -60,11 +61,16 @@ begin
   Zonas[4] := pnlZona5;
   Zonas[5] := pnlZona6;
   ZonaElegida := -1;
+end;
+
+procedure TfrmMapa.FormShow(Sender: TObject);
+begin
   tmrRefreshTimer(nil);
 end;
 
 procedure TfrmMapa.tmrRefreshTimer(Sender: TObject);
 begin
+  if (Sender <> nil) and not Visible then Exit;   { solo trabaja con la pantalla abierta }
   LeerMapa;
   PintarZonas;
   MostrarDetalle;

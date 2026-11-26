@@ -2,15 +2,16 @@ program AutonoLux;
 
 uses
   Forms,
-  uPrincipal in 'uPrincipal.pas' {frmPrincipal},
-  uConfiguracion in 'uConfiguracion.pas' {frmConfiguracion},
-  uConsumo in 'uConsumo.pas' {frmConsumo},
-  uIluminacion in 'uIluminacion.pas' {frmIluminacion},
-  uContador in 'uContador.pas' {frmContador},
-  uMapa in 'uMapa.pas' {frmMapa},
-  uComun in 'uComun.pas',
-  uMonitor in 'uMonitor.pas' {frmMonitor},
-  uBitacora in 'uBitacora.pas' {frmBitacora};
+  uPrincipal in 'Formas\uPrincipal.pas' {frmPrincipal},
+  uConfiguracion in 'Formas\uConfiguracion.pas' {frmConfiguracion},
+  uConsumo in 'Formas\uConsumo.pas' {frmConsumo},
+  uIluminacion in 'Formas\uIluminacion.pas' {frmIluminacion},
+  uContador in 'Formas\uContador.pas' {frmContador},
+  uMapa in 'Formas\uMapa.pas' {frmMapa},
+  uComun in 'Formas\uComun.pas',
+  uMonitor in 'Formas\uMonitor.pas' {frmMonitor},
+  uCalor in 'Formas\uCalor.pas' {frmCalor},
+  uBitacora in 'Formas\uBitacora.pas' {frmBitacora};
 
 begin
   Application.Initialize;
@@ -21,6 +22,7 @@ begin
   Application.CreateForm(TfrmContador, frmContador);
   Application.CreateForm(TfrmMapa, frmMapa);
   Application.CreateForm(TfrmMonitor, frmMonitor);
+  Application.CreateForm(TfrmCalor, frmCalor);
   Application.CreateForm(TfrmBitacora, frmBitacora);
   Application.Run;
 end.

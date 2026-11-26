@@ -75,7 +75,8 @@ end;
 procedure TfrmMonitor.ActualizarZonas;
 var
   Pers, Luz, Inten: array[0..5] of Integer;
-  i, ocup, pers_t: Integer;
+  i, ocup, pers_t, sala: Integer;
+  V: TStringList;
 begin
   { Datos reales: mapa.txt (personas) e iluminacion.txt (luz), que escriben Mapa.asm e Iluminacion.asm }
   LeerPersonasMapa(Pers);
@@ -103,7 +104,19 @@ begin
     if Pers[i - 1] > 0 then Inc(ocup);
   end;
   lblZonasOcup.Caption := Format('Zonas ocupadas: %d/%d', [ocup, NUM_ZONAS]);
-  lblPersonas.Caption := Format('Personas en zonas: %d', [pers_t]);
+  { coherencia con el Contador: las personas en zonas salen de las que estan en la sala }
+  sala := 0;
+  V := TStringList.Create;
+  try
+    if CargarLineas('visitantes.txt', V) and (V.Count > 0) then
+      sala := NumeroTras(V[V.Count - 1], 'sala');
+  finally
+    V.Free;
+  end;
+  if pers_t > sala then
+    lblPersonas.Caption := Format('En zonas: %d  |  En sala: %d  (ejecute Mapa para ajustar)', [pers_t, sala])
+  else
+    lblPersonas.Caption := Format('En sala: %d  |  En zonas: %d  |  Sin ubicar: %d', [sala, pers_t, sala - pers_t]);
 end;
 
 procedure TfrmMonitor.ActualizarAforo;

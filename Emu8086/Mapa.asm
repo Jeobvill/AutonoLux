@@ -49,6 +49,21 @@ MarcaLibre        DB "[ ]"
 TextoLuzOn        DB "ON "
 TextoLuzOff       DB "OFF"
 
+; ---- Coherencia con el Contador: las personas de las zonas salen de las que estan en la sala
+RutaVisitantes    DB "C:\AutonoLux\Jesus\visitantes.txt",0
+RegistroVis       DB 58 DUP(0)    ; ultimo registro de visitantes.txt
+SalaContador      DW 0            ; personas en sala segun el Contador
+EnZonas           DW 0            ; personas ubicadas en zonas
+SinUbicar         DW 0            ; sala - zonas
+Bloqueado         DB 0            ; 1 = se intento ocupar una zona sin personas disponibles
+TextoEstadoA      DB "En sala (Contador): "
+MSala             DB "000"
+TextoEstadoB      DB "   En zonas: "
+MZonas            DB "0"
+TextoEstadoC      DB "   Sin ubicar: "
+MSin              DB "000"
+TextoEstadoD      DB "               "
+
 ; ---- Buffer donde se lee mapa.txt (24 registros de 78 bytes)
 BufferMapa        DB 1872 DUP(?)
 
@@ -196,12 +211,15 @@ DibujarMapa ENDP
 
 ; Repinta lo que cambia: cajas, detalle, Dot Matrix y LEDs
 ActualizarMapa PROC
+    CALL LeerSalaContador       ; la sala manda: zonas <= sala
+    CALL AjustarASala
     CMP ModoGlobal,'A'
     JNE MapaSinAutomatico
     CALL AplicarModoAutomatico
 MapaSinAutomatico:
     CALL PintarZonasDelMapa
     CALL PintarDetalleDelMapa
+    CALL PintarEstadoMapa
     CALL EscribirDotMatrix
     CALL EscribirLeds
     RET
@@ -311,6 +329,7 @@ AplicarModoAutomatico ENDP
 ; Switches (2084h): un switch por zona. Encendido = ocupada, apagado = vacia
 ; Se revisa de la zona 6 a la 1 restando el peso de cada switch (sin AND)
 LeerSwitches PROC
+    MOV Bloqueado,0
     MOV DX,2084h
     IN AL,DX
     CMP AL,128                  ; los bits 7 y 6 no se usan
@@ -331,7 +350,16 @@ SwitchSiguienteZona:
     MOV SwitchesLeidos,AL
     CMP OcupacionPorZona[BX],0
     JNE SwitchSiguiente         ; ya tenia personas, se queda igual
+    CALL ContarEnZonas
+    MOV AX,SalaContador
+    CMP AX,EnZonas
+    JC SwitchSinPersonas        ; sala < zonas
+    JE SwitchSinPersonas        ; no queda nadie sin ubicar
     MOV OcupacionPorZona[BX],1
+    JMP SwitchSiguiente
+SwitchSinPersonas:
+    MOV Bloqueado,1             ; el switch esta encendido pero no hay quien lo ocupe
+    MOV OcupacionPorZona[BX],0
     JMP SwitchSiguiente
 SwitchApagado:
     MOV OcupacionPorZona[BX],0
@@ -393,6 +421,113 @@ EscribirLeds ENDP
 
 
 ;==================== CONVERSION ====================
+
+;==================== COHERENCIA CON EL CONTADOR ====================
+
+; Lee visitantes.txt (Contador.asm), registros de 58 bytes, y deja en SalaContador la sala del ultimo
+LeerSalaContador PROC
+    MOV SalaContador,0
+    ABRIR_ARCHIVO RutaVisitantes,0
+    JC FinLeerSala              ; sin visitantes.txt no hay nadie en la sala
+VisitanteOtro:
+    LEER_ARCHIVO 58,RegistroVis,ID
+    JC VisitanteFin
+    CMP AX,58
+    JE VisitanteOtro
+VisitanteFin:
+    CERRAR_ARCHIVO ID
+    XOR AX,AX
+    MOV SI,19                   ; "sala NNN" empieza en la columna 19
+    MOV CX,3
+SalaDigito:
+    MOV BL,RegistroVis[SI]
+    CMP BL,'0'
+    JC SalaSalta
+    CMP BL,':'
+    JNC SalaSalta
+    MOV DX,10
+    MUL DX
+    SUB BL,'0'
+    MOV BH,0
+    ADD AX,BX
+SalaSalta:
+    ADD SI,1
+    SUB CX,1
+    CMP CX,0
+    JNE SalaDigito
+    MOV SalaContador,AX
+FinLeerSala:
+    RET
+LeerSalaContador ENDP
+
+; EnZonas = personas ubicadas en las 6 zonas
+ContarEnZonas PROC
+    MOV EnZonas,0
+    MOV SI,0
+ContarSiguiente:
+    MOV AL,OcupacionPorZona[SI]
+    MOV AH,0
+    ADD EnZonas,AX
+    ADD SI,1
+    CMP SI,6
+    JNE ContarSiguiente
+    RET
+ContarEnZonas ENDP
+
+; Si hay mas personas en zonas que en la sala (salieron o se reinicio el Contador), se liberan zonas
+AjustarASala PROC
+    MOV BX,5
+AjustarSiguiente:
+    CALL ContarEnZonas
+    MOV AX,SalaContador
+    CMP AX,EnZonas
+    JNC AjustarListo            ; sala >= zonas
+    MOV OcupacionPorZona[BX],0
+    CMP BX,0
+    JE AjustarListo
+    SUB BX,1
+    JMP AjustarSiguiente
+AjustarListo:
+    RET
+AjustarASala ENDP
+
+; Renglon 22: "En sala (Contador): NNN   En zonas: N   Sin ubicar: NNN"
+PintarEstadoMapa PROC
+    CALL ContarEnZonas
+    MOV AX,SalaContador
+    SUB AX,EnZonas
+    JNC SinUbicarOk
+    MOV AX,0
+SinUbicarOk:
+    MOV SinUbicar,AX
+    MOV AL,BYTE PTR SalaContador
+    CALL ConvertirATexto
+    MOV AL,TextoNumero
+    MOV MSala,AL
+    MOV AL,TextoNumero+1
+    MOV MSala+1,AL
+    MOV AL,TextoNumero+2
+    MOV MSala+2,AL
+    MOV AL,BYTE PTR EnZonas
+    CALL ConvertirATexto
+    MOV AL,TextoNumero+2
+    MOV MZonas,AL
+    MOV AL,BYTE PTR SinUbicar
+    CALL ConvertirATexto
+    MOV AL,TextoNumero
+    MOV MSin,AL
+    MOV AL,TextoNumero+1
+    MOV MSin+1,AL
+    MOV AL,TextoNumero+2
+    MOV MSin+2,AL
+    MOV BL,1Eh
+    CMP Bloqueado,0
+    JE EstadoColor
+    MOV BL,1Ch                  ; rojo: no hay personas para ocupar otra zona
+EstadoColor:
+    IMPCAD_COLOR TextoEstadoA,70,22,3,0,0,BL
+    RET
+PintarEstadoMapa ENDP
 
 ; Entrada: AL = numero de 0 a 255.  Salida: TextoNumero = 3 caracteres
 ; Resta 100, luego 10, y lo que queda son las unidades

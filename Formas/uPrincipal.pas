@@ -50,6 +50,7 @@ type
     FMenusListos: Boolean;
     FPopCalc: TPopupMenu;
     procedure btnCalcClick(Sender: TObject);
+    procedure miAutoriaClick(Sender: TObject);
     procedure AgregarMenus;
     procedure miCalcClick(Sender: TObject);
     procedure miVideoClick(Sender: TObject);
@@ -159,17 +160,18 @@ const
   NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
     'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
 
-  function NuevoPanel(const Texto: string; Evento: TNotifyEvent): TPanel;
+  function NuevoPanel(const Texto: string; X, Ancho: Integer; Evento: TNotifyEvent): TPanel;
   begin
     Result := TPanel.Create(Self);
     Result.Parent := Self;
+    Result.SetBounds(X, 418, Ancho, 28);
     Result.Caption := Texto;
     Result.Color := btn0.Color;
     Result.ParentBackground := False;
     Result.Font.Name := btn0.Font.Name;
     Result.Font.Color := btn0.Font.Color;
-    Result.Font.Height := btn0.Font.Height;
-    Result.Font.Style := btn0.Font.Style;
+    Result.Font.Size := 9;
+    Result.Font.Style := [fsBold];
     Result.Cursor := crHandPoint;
     Result.OnClick := Evento;
   end;
@@ -177,7 +179,6 @@ const
 var
   Item: TMenuItem;
   i: Integer;
-  Botones: array[0..11] of TPanel;
 begin
   if FMenusListos then Exit;
   FMenusListos := True;
@@ -190,15 +191,39 @@ begin
     Item.OnClick := miCalcClick;
     FPopCalc.Items.Add(Item);
   end;
-  Botones[0] := btn1;  Botones[1] := btn2;  Botones[2] := btn3;
-  Botones[3] := btn4;  Botones[4] := btn5;  Botones[5] := btn6;
-  Botones[6] := btn7;  Botones[7] := btn8;  Botones[8] := btn9;
-  Botones[9] := NuevoPanel('[10] Coprocesador (c' + #225 + 'lculos)', btnCalcClick);
-  Botones[10] := NuevoPanel('[11] Trailer y entrevista', miVideoClick);
-  Botones[11] := btn0;
-  { 12 botones con el mismo estilo, repartidos en la columna derecha }
-  for i := 0 to 11 do
-    Botones[i].SetBounds(btn1.Left, 14 + i * 38, btn1.Width, 33);
+  { botones pequenos debajo del logo y del titulo }
+  NuevoPanel('Coprocesador', 40, 135, btnCalcClick);
+  NuevoPanel('Trailer / Entrevista', 185, 135, miVideoClick);
+  { Ayuda -> Autoria de archivos }
+  Item := TMenuItem.Create(mmPrincipal);
+  Item.Caption := 'Autor' + #237 + 'a de archivos';
+  Item.OnClick := miAutoriaClick;
+  miAyuda.Add(Item);
+end;
+
+procedure TfrmPrincipal.miAutoriaClick(Sender: TObject);
+const
+  NL = #13#10;
+begin
+  ShowMessage(
+    'AUTORIA DE ARCHIVOS Y PANTALLAS - AutonoLux' + NL + NL +
+    'Altamirano Murillo Axel Gabriel' + NL +
+    '  Pantallas: Login, Reporte del dia, Acerca de' + NL +
+    '  Emu8086: Login.asm, Reporte.asm, Acerca.asm' + NL +
+    '  Delphi: uLogin, uReporte, uAcerca, uAxelComun, uCalcAxel' + NL + NL +
+    'Veliz Partida Daniel' + NL +
+    '  Pantallas: Monitor de zonas, Mapa de calor, Bitacora de eventos' + NL +
+    '  Emu8086: Monitor.asm, Calor.asm, Bitacora.asm' + NL +
+    '  Delphi: uMonitor, uCalor, uBitacora, uCalcDaniel' + NL + NL +
+    'Diaz Robles Sergio' + NL +
+    '  Pantallas: Menu principal, Configuracion, Consumo energetico' + NL +
+    '  Emu8086: Configuracion.asm, Consumo.asm, Dispositivos.asm, Dispositivos_Datos.asm' + NL +
+    '  Delphi: uPrincipal, uConfiguracion, uConsumo, uComun, uCalcSergio' + NL + NL +
+    'Villa Campos Jesus Obed' + NL +
+    '  Pantallas: Mapa de zonas, Control de iluminacion, Contador de visitantes' + NL +
+    '  Emu8086: Mapa.asm, Iluminacion.asm, Contador.asm' + NL +
+    '  Delphi: uMapa, uIluminacion, uContador, uCalcJesus' + NL + NL +
+    'Compartidos: uCalcBase (base de los formularios del coprocesador), uVideo (trailer y entrevista)');
 end;
 
 procedure TfrmPrincipal.btnCalcClick(Sender: TObject);

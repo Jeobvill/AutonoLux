@@ -101,8 +101,8 @@ end;
 procedure TfrmPrincipal.PedirLogin;
 begin
   FUsuario := '';
-  lblSesion.Caption := 'Sesion: emule Login (doble clic = DEMO)';
-  HabilitarMenu(False);
+  lblSesion.Caption := 'Sesion: sin iniciar (login en emu8086)';
+  HabilitarMenu(True);
   DeleteFile(RutaArchivo('login_out.txt'));   { evita leer un acceso viejo }
   if (BuscarEmu('Login.exe') = '') or not LanzarEmu('Login.exe') then
   begin
@@ -145,6 +145,7 @@ end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
   CrearArbolCarpetas;
+  CrearDatosEjemplo;
   PedirLogin;
 end;
 

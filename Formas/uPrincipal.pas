@@ -42,6 +42,7 @@ type
     procedure btn9Click(Sender: TObject);
     procedure btn0Click(Sender: TObject);
     procedure miSalirClick(Sender: TObject);
+    procedure lblSesionDblClick(Sender: TObject);
   private
     FUsuario: string;
     procedure PedirLogin;
@@ -100,14 +101,14 @@ end;
 procedure TfrmPrincipal.PedirLogin;
 begin
   FUsuario := '';
-  lblSesion.Caption := 'Sesion: esperando acceso...';
+  lblSesion.Caption := 'Sesion: emule Login (doble clic = DEMO)';
   HabilitarMenu(False);
   DeleteFile(RutaArchivo('login_out.txt'));   { evita leer un acceso viejo }
   if (BuscarEmu('Login.exe') = '') or not LanzarEmu('Login.exe') then
   begin
-    { sin Login.exe compilado el sistema abre en modo demostracion }
+    { sin Login.asm junto al proyecto el sistema abre en modo demostracion }
     FUsuario := 'DEMO';
-    lblSesion.Caption := 'Sesion: DEMO (sin Login.exe)';
+    lblSesion.Caption := 'Sesion: DEMO (sin Login.asm)';
     HabilitarMenu(True);
   end;
 end;
@@ -187,6 +188,15 @@ end;
 procedure TfrmPrincipal.btn0Click(Sender: TObject);
 begin
   PedirLogin;                    { cerrar sesion = volver a pedir acceso }
+end;
+
+{ Doble clic en "Sesion": entra en modo DEMO si Login no se esta emulando }
+procedure TfrmPrincipal.lblSesionDblClick(Sender: TObject);
+begin
+  if FUsuario <> '' then Exit;
+  FUsuario := 'DEMO';
+  lblSesion.Caption := 'Sesion: DEMO';
+  HabilitarMenu(True);
 end;
 
 procedure TfrmPrincipal.miSalirClick(Sender: TObject);

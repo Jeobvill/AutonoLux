@@ -71,6 +71,7 @@ end;
 
 procedure TfrmIluminacion.tmrRefreshTimer(Sender: TObject);
 begin
+  if (Sender <> nil) and not Visible then Exit;   { solo trabaja con la pantalla abierta }
   ActualizarLuces;
 end;
 

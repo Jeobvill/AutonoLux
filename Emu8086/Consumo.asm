@@ -16,6 +16,17 @@ INCLUDE Biblioteca.txt
     RutaRaiz          DB "C:\AutonoLux",0
     RutaSergio        DB "C:\AutonoLux\Sergio",0
     RutaConsumo       DB "C:\AutonoLux\Sergio\consumo.txt",0
+    RutaIluminacion   DB "C:\AutonoLux\Jesus\iluminacion.txt",0
+    BufferIlum        DB 180 DUP(0)  ; 6 registros de 30 bytes de iluminacion.txt (real)
+    RutaConfiguracion DB "C:\AutonoLux\Sergio\config.txt",0
+    BufferConfig      DB 256 DUP(0)  ; config.txt leido (lo escribe Configuracion.asm)
+    HoraAbre          DB 8           ; horario de operacion (opcion 5 de config.txt)
+    HoraCierra        DB 18
+    TextoPersAbiertas DB "PERSIANAS ABIERTAS: dentro del horario se aprovecha la luz natural    "
+    TextoPersCerradas DB "PERSIANAS CERRADAS: fuera del horario de operacion                    "
+    LamparasPorZona   DW 4           ; lamparas instaladas por zona
+    WattsLampara      DW 18          ; potencia por lampara (opcion 3 de Configuracion)
+    PorcentajeZonas   DB 0,17,33,50,67,83,100  ; % de zonas encendidas (0 a 6)
 
 ; ---- MUL del catedratico: potencia = lamparas x watts por lampara (palabras). Inician vacios
 mulN1             DW 0          ; lamparas de la zona
@@ -54,7 +65,7 @@ TextoConsumo       DB "+========================================================
                   DB "| 6 Sala de Grupos    ___         ___ h        ___            $ ___        |",13,10
                   DB "|--------------------------------------------------------------------------|",13,10
                   DB "| TOTAL                                        ___ kWh        $ ___        |",13,10
-                  DB "| POTENCIA ESTANTES A-F: ___ W          AHORRO: ___ %                      |",13,10
+                  DB "| POTENCIA TOTAL ENCEND. ___ W          AHORRO: ___ %                      |",13,10
                   DB "| Sin automatizacion (luces siempre ON): ___ kWh                           |",13,10
                   DB "| [ESC] Volver                                                             |",13,10
                   DB "+==========================================================================+",13,10
@@ -90,6 +101,8 @@ ConsumoAbierto:
     JC ErrorAlLeerConsumo
     CERRAR_ARCHIVO ID
     CALL DibujarConsumo
+    CALL LeerConfiguracion      ; watts por lampara y horario reales (config.txt)
+    CALL LeerIluminacion        ; datos reales: zonas encendidas segun iluminacion.txt
     CALL CalcularConsumo
     CALL PintarResultadosConsumo
 ConsumoEsperarTecla:
@@ -143,6 +156,131 @@ DibujarConsumo PROC
 DibujarConsumo ENDP
 
 ; Calculos del catedratico (se copian tal como los dio)
+; Busca "Opcion N: " en BufferConfig.  Entrada: AL = digito.  Salida: SI = inicio del valor, CF=1 si no esta
+BuscarOpcion PROC
+    MOV SI,0
+BuscarSiguiente:
+    CMP SI,240
+    JNC OpcionNoEsta
+    CMP BufferConfig[SI],'O'
+    JNE AvanzarBusqueda
+    CMP BufferConfig[SI+7],AL
+    JNE AvanzarBusqueda
+    ADD SI,10                   ; "Opcion N: " mide 10 caracteres
+    CLC
+    RET
+AvanzarBusqueda:
+    ADD SI,1
+    JMP BuscarSiguiente
+OpcionNoEsta:
+    STC
+    RET
+BuscarOpcion ENDP
+
+; Convierte los digitos que empiezan en BufferConfig[SI] a numero en AX (usa MUL por 10)
+LeerNumeroConfig PROC
+    XOR AX,AX
+NumeroSiguiente:
+    MOV BL,BufferConfig[SI]
+    CMP BL,'0'
+    JC FinNumeroConfig          ; menor que '0'
+    CMP BL,':'
+    JNC FinNumeroConfig         ; mayor que '9'
+    MOV DX,10
+    MUL DX
+    SUB BL,'0'
+    MOV BH,0
+    ADD AX,BX
+    ADD SI,1
+    JMP NumeroSiguiente
+FinNumeroConfig:
+    RET
+LeerNumeroConfig ENDP
+
+; Lee config.txt (Configuracion.asm): opcion 3 = watts por lampara, opcion 5 = horario HH:MM-HH:MM
+LeerConfiguracion PROC
+    ABRIR_ARCHIVO RutaConfiguracion,0
+    JC FinLeerConfiguracion     ; sin config.txt se usan los valores de fabrica
+    LEER_ARCHIVO 255,BufferConfig,ID
+    CERRAR_ARCHIVO ID
+    MOV AL,'3'
+    CALL BuscarOpcion
+    JC ConfigHorario
+    CALL LeerNumeroConfig
+    CMP AX,0
+    JE ConfigHorario
+    MOV WattsLampara,AX
+ConfigHorario:
+    MOV AL,'5'
+    CALL BuscarOpcion
+    JC FinLeerConfiguracion
+    CALL LeerNumeroConfig       ; hora de apertura
+    MOV HoraAbre,AL
+    ADD SI,1                    ; salta ':' y minutos
+    MOV AL,BufferConfig[SI+2]
+    CMP AL,'-'
+    JNE FinLeerConfiguracion
+    ADD SI,3
+    CALL LeerNumeroConfig       ; hora de cierre
+    MOV HoraCierra,AL
+FinLeerConfiguracion:
+    RET
+LeerConfiguracion ENDP
+
+; Persianas con el Stepper_motor: abiertas si la hora real esta dentro del horario de operacion
+ControlPersianas PROC
+    MOV AH,2Ch
+    INT 21H                     ; CH = hora real
+    CMP CH,HoraAbre
+    JC PersianasCerrar          ; antes de abrir
+    CMP CH,HoraCierra
+    JNC PersianasCerrar         ; despues de cerrar
+    MOV DireccionMotor,0
+    MOV CX,24
+    CALL GirarPersianas
+    IMPCAD_COLOR TextoPersAbiertas,70,22,3,0,0,1Ah
+    RET
+PersianasCerrar:
+    MOV DireccionMotor,1
+    MOV CX,24
+    CALL GirarPersianas
+    IMPCAD_COLOR TextoPersCerradas,70,22,3,0,0,1Ch
+    RET
+ControlPersianas ENDP
+
+; Lee iluminacion.txt (Jesus) y carga los operandos del MUL y del SUB con valores reales
+; mulN1 = zonas con luz encendida x lamparas por zona ; mulN2 = watts por lampara
+; restaN1 = 100 (sin automatizacion todo encendido) ; restaN2 = % de zonas encendidas
+LeerIluminacion PROC
+    MOV mulN1,0
+    MOV AX,WattsLampara
+    MOV mulN2,AX
+    MOV restaN1,100
+    MOV restaN2,0
+    ABRIR_ARCHIVO RutaIluminacion,0
+    JC FinLeerIlum              ; si aun no hay iluminacion.txt todo queda en cero
+    LEER_ARCHIVO 180,BufferIlum,ID
+    CERRAR_ARCHIVO ID
+    XOR CX,CX                   ; zonas encendidas
+    XOR SI,SI                   ; inicio del registro
+ContarZonas:
+    CMP BufferIlum[SI+18],'1'   ; "Zona N modo X luz L": L esta en la columna 18
+    JNE SiguienteZonaIlum
+    INC CX
+SiguienteZonaIlum:
+    ADD SI,30
+    CMP SI,180
+    JC ContarZonas
+    MOV AX,LamparasPorZona
+    MUL CX                      ; lamparas encendidas = zonas x lamparas por zona
+    MOV mulN1,AX
+    MOV BX,CX
+    MOV AL,PorcentajeZonas[BX]
+    MOV restaN2,AL
+FinLeerIlum:
+    RET
+LeerIluminacion ENDP
+
 CalcularConsumo PROC
     ; ---- MUL: potencia = lamparas x watts por lampara ----
     XOR AX,AX

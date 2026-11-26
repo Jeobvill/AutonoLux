@@ -123,6 +123,22 @@
         <DCCReference Include="Formas\uBitacora.pas">
             <Form>frmBitacora</Form>
         </DCCReference>
+        <DCCReference Include="Formas\uAxelComun.pas"/>
+        <DCCReference Include="Formas\uCalcBase.pas"/>
+        <DCCReference Include="Formas\uCalcSergio.pas"/>
+        <DCCReference Include="Formas\uCalcDaniel.pas"/>
+        <DCCReference Include="Formas\uCalcJesus.pas"/>
+        <DCCReference Include="Formas\uCalcAxel.pas"/>
+        <DCCReference Include="Formas\uVideo.pas"/>
+        <DCCReference Include="Formas\uLogin.pas">
+            <Form>frmLogin</Form>
+        </DCCReference>
+        <DCCReference Include="Formas\uReporte.pas">
+            <Form>frmReporte</Form>
+        </DCCReference>
+        <DCCReference Include="Formas\uAcerca.pas">
+            <Form>frmAcerca</Form>
+        </DCCReference>
         <BuildConfiguration Include="Base">
             <Key>Base</Key>
         </BuildConfiguration>

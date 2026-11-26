@@ -7627,6 +7627,7 @@ object frmPrincipal: TfrmPrincipal
       Caption = 'Ayuda'
       object miAcercaDe: TMenuItem
         Caption = 'Acerca de'
+        OnClick = miAcercaDeClick
       end
     end
   end

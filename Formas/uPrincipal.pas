@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, ComCtrls, Menus, uConsumo, uConfiguracion, uIluminacion, uContador, uMonitor,
-  uBitacora, uMapa, uCalor;
+  uBitacora, uMapa, uCalor, uLogin, uReporte, uAcerca;
 
 type
   TfrmPrincipal = class(TForm)
@@ -43,8 +43,14 @@ type
     procedure btn0Click(Sender: TObject);
     procedure miSalirClick(Sender: TObject);
     procedure lblSesionDblClick(Sender: TObject);
+    procedure miAcercaDeClick(Sender: TObject);
   private
     FUsuario: string;
+    TicksGuardado: Integer;
+    FMenusListos: Boolean;
+    procedure AgregarMenus;
+    procedure miCalcClick(Sender: TObject);
+    procedure miVideoClick(Sender: TObject);
     procedure PedirLogin;
     procedure RevisarLogin;
     procedure HabilitarMenu(Activo: Boolean);
@@ -57,7 +63,7 @@ implementation
 
 {$R *.dfm}
 
-uses uComun;
+uses uComun, uCalcSergio, uCalcDaniel, uCalcJesus, uCalcAxel, uVideo;
 
 procedure TfrmPrincipal.btn2Click(Sender: TObject);
 begin
@@ -98,19 +104,22 @@ begin
       TPanel(Components[i]).Enabled := Activo;
 end;
 
+{ El acceso lo valida la pantalla Login contra usuarios.txt (el mismo que crea Login.asm) }
 procedure TfrmPrincipal.PedirLogin;
 begin
   FUsuario := '';
-  lblSesion.Caption := 'Sesion: emule Login (doble clic = DEMO)';
+  lblSesion.Caption := 'Sesion: sin iniciar';
   HabilitarMenu(False);
-  DeleteFile(RutaArchivo('login_out.txt'));   { evita leer un acceso viejo }
-  if (BuscarEmu('Login.exe') = '') or not LanzarEmu('Login.exe') then
+  frmLogin.Preparar;
+  if frmLogin.ShowModal = mrOk then
   begin
-    { sin Login.asm junto al proyecto el sistema abre en modo demostracion }
-    FUsuario := 'DEMO';
-    lblSesion.Caption := 'Sesion: DEMO (sin Login.asm)';
+    FUsuario := frmLogin.Usuario;
+    UsuarioActual := FUsuario;
+    lblSesion.Caption := 'Sesion: ' + FUsuario;
     HabilitarMenu(True);
-  end;
+  end
+  else
+    Close;
 end;
 
 { Cada segundo: reloj y, mientras no hay sesion, lectura de login_out.txt }
@@ -142,14 +151,71 @@ begin
     Close;
 end;
 
+{ Menu Calculos (formularios del coprocesador) y Ayuda > Trailer y entrevista }
+procedure TfrmPrincipal.AgregarMenus;
+const
+  NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
+    'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
+var
+  Calc, Item: TMenuItem;
+  i: Integer;
+begin
+  if FMenusListos then Exit;
+  FMenusListos := True;
+  Calc := TMenuItem.Create(mmPrincipal);
+  Calc.Caption := 'C' + #225 + 'lculos';
+  for i := 0 to 3 do
+  begin
+    Item := TMenuItem.Create(mmPrincipal);
+    Item.Caption := NOMBRES[i];
+    Item.Tag := i;
+    Item.OnClick := miCalcClick;
+    Calc.Add(Item);
+  end;
+  mmPrincipal.Items.Insert(miAyuda.MenuIndex, Calc);
+  Item := TMenuItem.Create(mmPrincipal);
+  Item.Caption := 'Trailer y entrevista';
+  Item.OnClick := miVideoClick;
+  miAyuda.Add(Item);
+end;
+
+procedure TfrmPrincipal.miCalcClick(Sender: TObject);
+begin
+  case TMenuItem(Sender).Tag of
+    0: MostrarCalcSergio;
+    1: MostrarCalcDaniel;
+    2: MostrarCalcJesus;
+    3: MostrarCalcAxel;
+  end;
+end;
+
+procedure TfrmPrincipal.miVideoClick(Sender: TObject);
+begin
+  MostrarVideo;
+end;
+
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
+  AgregarMenus;
   CrearArbolCarpetas;
+  CargarConsumo;
+  CargarCalor;
   PedirLogin;
 end;
 
 procedure TfrmPrincipal.tmrHoraTimer(Sender: TObject);
 begin
+  { cada segundo se muestrea iluminacion.txt para el consumo real; se guarda cada 10 s }
+  MuestrearConsumo(tmrHora.Interval / 1000);
+  MuestrearCalor(tmrHora.Interval / 1000);
+  RegistrarEventos;
+  Inc(TicksGuardado);
+  if TicksGuardado >= 10 then
+  begin
+    TicksGuardado := 0;
+    GuardarConsumo;
+    GuardarCalor;
+  end;
   if sbEstado.Panels.Count > 1 then
   begin
     sbEstado.Panels[0].Text := DateToStr(Date);
@@ -172,7 +238,7 @@ end;
 
 procedure TfrmPrincipal.btn6Click(Sender: TObject);
 begin
-  LanzarEmu('Reporte.exe');      { uReporte (Axel) todavia no existe }
+  frmReporte.ShowModal;
 end;
 
 procedure TfrmPrincipal.btn8Click(Sender: TObject);
@@ -182,7 +248,7 @@ end;
 
 procedure TfrmPrincipal.btn9Click(Sender: TObject);
 begin
-  LanzarEmu('Acerca.exe');       { uAcerca (Axel) todavia no existe }
+  frmAcerca.ShowModal;
 end;
 
 procedure TfrmPrincipal.btn0Click(Sender: TObject);
@@ -197,6 +263,11 @@ begin
   FUsuario := 'DEMO';
   lblSesion.Caption := 'Sesion: DEMO';
   HabilitarMenu(True);
+end;
+
+procedure TfrmPrincipal.miAcercaDeClick(Sender: TObject);
+begin
+  frmAcerca.ShowModal;
 end;
 
 procedure TfrmPrincipal.miSalirClick(Sender: TObject);

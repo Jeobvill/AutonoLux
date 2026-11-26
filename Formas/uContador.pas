@@ -85,9 +85,7 @@ begin
   L := TStringList.Create;
   C := TStringList.Create;
   try
-    { config.txt: linea 1 = aforo maximo (el mismo que usa el Monitor) }
-    if CargarLineas('config.txt', C) and (C.Count > 0) then
-      aforo := ExtraerEntero(C[0], AFORO_DEFAULT);
+    aforo := ConfigEntero(2);   { Opcion 2 de config.txt (Configuracion) }
     if aforo <= 0 then aforo := AFORO_DEFAULT;
 
     mmEventos.Lines.BeginUpdate;

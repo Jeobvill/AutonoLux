@@ -25,9 +25,15 @@ PicoDelDia        DB 0
 AforoMaximo       DB 60
 Porcentaje        DB 0      ; porcentaje de aforo ocupado
 CeldasBarra       DW 0      ; celdas '#' de la barra (1 celda = 3 personas)
-MensajeContador   DB 0      ; 0 ninguno, 1 sala llena, 2 sala vacia, 4 reiniciado
+MensajeContador   DB 0      ; 0 ninguno, 1 sala llena, 2 sala vacia, 3 hay gente en zonas, 4 reiniciado
 TipoDeEvento      DB 'E'    ; 'I' inicio, 'E' entra, 'S' sale (para visitantes.txt)
 BotonesLeidos     DB 0
+
+; ---- Coherencia con el Mapa: no salen personas que estan ubicadas en una zona
+RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
+BufferMapa        DB 1872 DUP(0)
+OffsetsPersonas   DW 872,896,920,1262,1286,1310   ; columna de personas de cada zona en mapa.txt
+ZonasContadas     DW 0
 
 ; ---- Variables de la resta del catedratico: restaR = restaN1 - restaN2
 restaN1           DB 0
@@ -42,6 +48,7 @@ TextoNumero       DB "000"      ; resultado de ConvertirATexto
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 TextoSalaLlena    DB "Aforo maximo alcanzado. No puede entrar nadie mas.  "
 TextoSalaVacia    DB "La sala esta vacia. No puede salir nadie.           "
+TextoZonasConGente DB "Hay personas en zonas del Mapa: liberelas para salir"
 TextoReiniciado   DB "Contadores reiniciados.                             "
 
 ; ---- Pedazos del registro de visitantes.txt (58 bytes por evento)
@@ -211,8 +218,13 @@ PintarMensajeContador PROC
     JE MensajeSalaLlena
     CMP MensajeContador,2
     JE MensajeSalaVacia
+    CMP MensajeContador,3
+    JE MensajeZonasConGente
     CMP MensajeContador,4
     JE MensajeReiniciado
+    RET
+MensajeZonasConGente:
+    IMPCAD_COLOR TextoZonasConGente,52,20,3,0,0,1Ch
     RET
 MensajeSalaLlena:
     IMPCAD_COLOR TextoSalaLlena,52,20,3,0,0,1Ch
@@ -291,6 +303,44 @@ EntradaGuardar:
     RET
 RegistrarEntrada ENDP
 
+; Suma las personas de las 6 zonas de mapa.txt (Mapa.asm) en ZonasContadas
+PersonasEnZonas PROC
+    MOV ZonasContadas,0
+    ABRIR_ARCHIVO RutaMapa,0
+    JC FinPersonasEnZonas       ; sin mapa.txt no hay nadie en zonas
+    LEER_ARCHIVO 1872,BufferMapa,ID
+    CERRAR_ARCHIVO ID
+    MOV BP,0
+ZonaSiguienteLectura:
+    MOV BX,BP
+    ADD BX,BX
+    MOV SI,OffsetsPersonas[BX]
+    XOR AX,AX
+    MOV CX,3
+ZonaDigito:
+    MOV BL,BufferMapa[SI]
+    CMP BL,'0'
+    JC ZonaSalta
+    CMP BL,':'
+    JNC ZonaSalta
+    MOV DX,10
+    MUL DX
+    SUB BL,'0'
+    MOV BH,0
+    ADD AX,BX
+ZonaSalta:
+    ADD SI,1
+    SUB CX,1
+    CMP CX,0
+    JNE ZonaDigito
+    ADD ZonasContadas,AX
+    ADD BP,1
+    CMP BP,6
+    JNE ZonaSiguienteLectura
+FinPersonasEnZonas:
+    RET
+PersonasEnZonas ENDP
+
 ; Sale una persona (tecla - o boton 1)
 RegistrarSalida PROC
     MOV MensajeContador,0
@@ -299,6 +349,19 @@ RegistrarSalida PROC
     MOV MensajeContador,2       ; sala vacia
     RET
 SalidaConPersonas:
+    CALL PersonasEnZonas        ; la sala no puede quedar con menos gente que las zonas del Mapa
+    MOV AL,PersonasEnSala
+    MOV AH,0
+    CMP AX,ZonasContadas
+    JNC SalidaPermitida         ; sala > zonas: alguien esta sin ubicar
+    JMP SalidaBloqueada
+SalidaPermitida:
+    CMP AX,ZonasContadas
+    JNE SalidaLibre
+SalidaBloqueada:
+    MOV MensajeContador,3       ; sala = zonas: todos estan ubicados en el Mapa
+    RET
+SalidaLibre:
     SUB PersonasEnSala,1
     CMP SalidasDelDia,255
     JE SalidaGuardar

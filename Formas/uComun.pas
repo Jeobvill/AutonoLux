@@ -1,6 +1,6 @@
 unit uComun;
 { Utilidades compartidas por todas las pantallas Delphi.
-  Los .txt viven en C:\AutonoLux\<integrante>\ (el mismo arbol que crean los .asm) }
+  Los .txt los escribe emu8086 en su disco virtual (<emu8086>\vdrive\C\AutonoLux\<integrante>\) }
 
 interface
 
@@ -19,8 +19,34 @@ implementation
 
 uses SysUtils, Windows, ShellAPI, Dialogs;
 
+{ emu8086 guarda los archivos de los .asm en su disco virtual: lo que el .asm escribe en
+  C:\AutonoLux\... queda realmente en <carpeta de emu8086>\vdrive\C\AutonoLux\...
+  (igual que la ruta que usa el proyecto de Veliz: C:\emu8086\vdrive\C\...). }
+function CarpetaEmu: string;
 const
-  RAIZ = 'C:\AutonoLux\';
+  RUTAS: array[0..4] of string = ('C:\emu8086\', 'C:\LI\lemu8086\',
+    'C:\Program Files (x86)\emu8086\', 'C:\Program Files\emu8086\',
+    'C:\Codigos\lemu8086\');
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := 0 to High(RUTAS) do
+    if DirectoryExists(RUTAS[i] + 'vdrive\C') then
+    begin
+      Result := RUTAS[i];
+      Exit;
+    end;
+end;
+
+{ Raiz AutonoLux donde estan los .txt: el disco virtual de emu8086; si no existe, C:\AutonoLux\ }
+function RaizDatos: string;
+begin
+  if CarpetaEmu <> '' then
+    Result := CarpetaEmu + 'vdrive\C\AutonoLux\'
+  else
+    Result := 'C:\AutonoLux\';
+end;
 
 { Carpeta de cada archivo: la misma donde lo escribe su programa .asm }
 function CarpetaDe(const Nombre: string): string;
@@ -39,16 +65,16 @@ end;
 
 function RutaArchivo(const Nombre: string): string;
 begin
-  Result := RAIZ + CarpetaDe(Nombre) + '\' + Nombre;
+  Result := RaizDatos + CarpetaDe(Nombre) + '\' + Nombre;
 end;
 
 { Raiz y una carpeta por integrante, igual que CREAR_CARPETA en los .asm }
 procedure CrearArbolCarpetas;
 begin
-  ForceDirectories(RAIZ + 'Sergio');
-  ForceDirectories(RAIZ + 'Axel');
-  ForceDirectories(RAIZ + 'Daniel');
-  ForceDirectories(RAIZ + 'Jesus');
+  ForceDirectories(RaizDatos + 'Sergio');
+  ForceDirectories(RaizDatos + 'Axel');
+  ForceDirectories(RaizDatos + 'Daniel');
+  ForceDirectories(RaizDatos + 'Jesus');
 end;
 
 { Un .exe de Emu8086 es un programa DOS de 16 bits: Windows moderno no lo ejecuta solo.
@@ -71,22 +97,12 @@ begin
   Result := '';
 end;
 
-{ Programa emu8086.exe: lugares donde suele instalarse }
+{ Programa emu8086.exe dentro de la carpeta de instalacion detectada }
 function BuscarEmulador: string;
-const
-  RUTAS: array[0..4] of string = ('C:\LI\lemu8086\emu8086.exe',
-    'C:\emu8086\emu8086.exe', 'C:\Program Files (x86)\emu8086\emu8086.exe',
-    'C:\Program Files\emu8086\emu8086.exe', 'C:\Codigos\lemu8086\emu8086.exe');
-var
-  i: Integer;
 begin
   Result := '';
-  for i := 0 to High(RUTAS) do
-    if FileExists(RUTAS[i]) then
-    begin
-      Result := RUTAS[i];
-      Exit;
-    end;
+  if (CarpetaEmu <> '') and FileExists(CarpetaEmu + 'emu8086.exe') then
+    Result := CarpetaEmu + 'emu8086.exe';
 end;
 
 { True si se abrio el programa en emu8086; las pantallas Delphi solo llaman y Emu ejecuta }

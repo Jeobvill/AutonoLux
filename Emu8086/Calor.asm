@@ -20,9 +20,35 @@ INCLUDE Biblioteca.txt
 
 ; ---- Periodo en pantalla y porcentaje de la zona mas concurrida de cada periodo
 PeriodoActual     DB 'H'        ; 'H' hoy, 'S' semana, 'M' mes
-PorcentajeHoy     DB 38
-PorcentajeSemana  DB 35
-PorcentajeMes     DB 33
+; ---- Datos reales: mapa.txt (personas por zona) y calor_hist.txt (lecturas acumuladas)
+RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
+RutaHistorial     DB "C:\AutonoLux\Daniel\calor_hist.txt",0
+BufferMapa        DB 1872 DUP(0)
+OffsetsPersonas   DW 872,896,920,1262,1286,1310   ; columna de personas de cada zona en mapa.txt
+; Historial (26 bytes seguidos): llave semana, llave mes, 6 palabras semana, 6 palabras mes
+KeySem            DB 0
+KeyMes            DB 0
+Sem               DW 6 DUP(0)
+Mes               DW 6 DUP(0)
+HistLeido         DB 26 DUP(0)
+Snap              DW 6 DUP(0)    ; personas por zona en este momento (hoy)
+TotalCalor        DW 0
+ValorFila         DW 0
+PctFila           DW 0
+PctMax            DW 0
+MaxVal            DW 0
+IdxMax            DW 0
+NombresZonas      DB "Recepcion           Lectura Silenciosa  Sala de Computo     Hemeroteca          Estantes A-F        Sala de Grupos      "
+NombreSinDatos    DB "(sin datos de Mapa)  "
+RowsCalor         DB "| 1 Recepcion            000 %                              0              |"
+                  DB "| 2 Lectura Silenciosa   000 %                              0              |"
+                  DB "| 3 Sala de Computo      000 %                              0              |"
+                  DB "| 4 Hemeroteca           000 %                              0              |"
+                  DB "| 5 Estantes A-F         000 %                              0              |"
+                  DB "| 6 Sala de Grupos       000 %                              0              |"
+RowHeader         DB "| #  ZONA                  OCUP.   INTENSIDAD            PERSONAS          |"
+RowIntens         DB "| Intensidad: cada # = 5 % de las personas contadas en el periodo          |"
+RowMas            DB "| Zona mas concurrida: Recepcion                                           |"
 
 ; ---- Textos cortos que se escriben sobre la pantalla
 TextoPeriodoHoy     DB "HOY   "
@@ -44,33 +70,33 @@ TextoCalor        DB "+=========================================================
                   DB "+==========================================================================+",13,10
                   DB "| MAPA DE CALOR (zonas mas ocupadas)        Periodo: ______                |",13,10
                   DB "|--------------------------------------------------------------------------|",13,10
-                  DB "| #  ZONA                  OCUP.   INTENSIDAD            TIEMPO            |",13,10
-                  DB "| 1 Lectura Silenciosa   38 %   ###################   3h 48m               |",13,10
-                  DB "| 2 Sala de Computo      26 %   #############         2h 36m               |",13,10
-                  DB "| 3 Sala de Grupos       17 %   ########              1h 42m               |",13,10
-                  DB "| 4 Recepcion            11 %   #####                 1h 06m               |",13,10
-                  DB "| 5 Hemeroteca            5 %   ##                    0h 30m               |",13,10
-                  DB "| 6 Estantes A-F          3 %   #                     0h 18m               |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
                   DB "|--------------------------------------------------------------------------|",13,10
-                  DB "| Intensidad: cada # = 2 % de la ocupacion total del periodo               |",13,10
-                  DB "| Zona mas concurrida: Lectura Silenciosa                                  |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
                   DB "|                                                                          |",13,10
                   DB "| [H] Hoy      [S] Semana      [M] Mes      [ESC] Volver                   |",13,10
                   DB "|                                                                          |",13,10
                   DB "| Pressure Guage: % de la zona mas concurrida                              |",13,10
                   DB "+==========================================================================+",13,10
-                  DB "| 1 Lectura Silenciosa   35 %   #################     23h 40m              |",13,10
-                  DB "| 2 Sala de Computo      27 %   #############         18h 10m              |",13,10
-                  DB "| 3 Sala de Grupos       18 %   #########             12h 05m              |",13,10
-                  DB "| 4 Recepcion            10 %   #####                 6h 50m               |",13,10
-                  DB "| 5 Hemeroteca            6 %   ###                   4h 15m               |",13,10
-                  DB "| 6 Estantes A-F          4 %   ##                    2h 30m               |",13,10
-                  DB "| 1 Lectura Silenciosa   33 %   ################      94h 20m              |",13,10
-                  DB "| 2 Sala de Computo      28 %   ##############        78h 45m              |",13,10
-                  DB "| 3 Sala de Grupos       19 %   #########             52h 10m              |",13,10
-                  DB "| 4 Recepcion            10 %   #####                 27h 30m              |",13,10
-                  DB "| 5 Hemeroteca            6 %   ###                   15h 55m              |",13,10
-                  DB "| 6 Estantes A-F          4 %   ##                    10h 40m              |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
 
 .CODE
 Inicio:
@@ -99,6 +125,8 @@ CalorAbierto:
     LEER_ARCHIVO 2808,BufferCalor,ID
     JC ErrorAlLeerCalor
     CERRAR_ARCHIVO ID
+    CALL LeerMapaCalor          ; personas reales por zona (mapa.txt)
+    CALL ActualizarHistorial    ; acumula semana y mes (calor_hist.txt)
     MOV PeriodoActual,'H'
 CalorRedibujar:
     CALL DibujarCalor
@@ -171,51 +199,281 @@ DibujarCalor PROC
     RET
 DibujarCalor ENDP
 
-; Escribe el periodo, cambia el ranking si es semana o mes y mueve el Pressure Guage
+; Escribe el periodo, calcula el ranking con datos reales y mueve el Pressure Guage
 PintarPeriodo PROC
     CMP PeriodoActual,'S'
     JE PintarPeriodoSemana
     CMP PeriodoActual,'M'
     JE PintarPeriodoMes
     IMPCAD_COLOR TextoPeriodoHoy,6,7,53,0,0,1Eh
-    MOV AL,PorcentajeHoy        ; el ranking de hoy ya esta dibujado
-    CALL EscribirPressureGuage
-    RET
+    LEA SI,Snap
+    JMP PintarFilas
 PintarPeriodoSemana:
     IMPCAD_COLOR TextoPeriodoSemana,6,7,53,0,0,1Eh
-    CALL DibujarRankingSemana
-    MOV AL,PorcentajeSemana
-    CALL EscribirPressureGuage
-    RET
+    LEA SI,Sem
+    JMP PintarFilas
 PintarPeriodoMes:
     IMPCAD_COLOR TextoPeriodoMes,6,7,53,0,0,1Eh
-    CALL DibujarRankingMes
-    MOV AL,PorcentajeMes
+    LEA SI,Mes
+PintarFilas:
+    CALL LlenarFilas
+    IMPCAD_COLOR RowHeader,76,9,0,0,0,1Eh
+    IMPCAD_COLOR RowsCalor,76,10,0,0,0,1Fh
+    IMPCAD_COLOR RowsCalor+76,76,11,0,0,0,1Fh
+    IMPCAD_COLOR RowsCalor+152,76,12,0,0,0,1Fh
+    IMPCAD_COLOR RowsCalor+228,76,13,0,0,0,1Fh
+    IMPCAD_COLOR RowsCalor+304,76,14,0,0,0,1Fh
+    IMPCAD_COLOR RowsCalor+380,76,15,0,0,0,1Fh
+    IMPCAD_COLOR RowIntens,76,17,0,0,0,1Fh
+    IMPCAD_COLOR RowMas,76,18,0,0,0,1Ah
+    MOV AX,PctMax
     CALL EscribirPressureGuage
     RET
 PintarPeriodo ENDP
 
-; Renglones 10 a 15 con el ranking de la semana (registros 24 a 29 de calor.txt)
-DibujarRankingSemana PROC
-    IMPCAD_COLOR BufferCalor+1872,76,10,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+1950,76,11,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2028,76,12,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2106,76,13,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2184,76,14,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2262,76,15,0,0,0,1Fh
-    RET
-DibujarRankingSemana ENDP
+;==================== DATOS REALES ====================
 
-; Renglones 10 a 15 con el ranking del mes (registros 30 a 35 de calor.txt)
-DibujarRankingMes PROC
-    IMPCAD_COLOR BufferCalor+2340,76,10,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2418,76,11,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2496,76,12,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2574,76,13,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2652,76,14,0,0,0,1Fh
-    IMPCAD_COLOR BufferCalor+2730,76,15,0,0,0,1Fh
+; Convierte los CX caracteres que empiezan en [DI] en un numero (AX); ignora espacios
+ParseDigitos PROC
+    XOR AX,AX
+ParseSiguiente:
+    CMP CX,0
+    JE FinParse
+    MOV BL,[DI]
+    CMP BL,'0'
+    JC ParseSalta
+    CMP BL,':'
+    JNC ParseSalta
+    MOV DX,10
+    MUL DX
+    SUB BL,'0'
+    MOV BH,0
+    ADD AX,BX
+ParseSalta:
+    ADD DI,1
+    SUB CX,1
+    JMP ParseSiguiente
+FinParse:
     RET
-DibujarRankingMes ENDP
+ParseDigitos ENDP
+
+; Escribe AX como CX caracteres en [DI], sin ceros a la izquierda
+PonerNum PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI
+    PUSH DI
+    PUSH BP
+    MOV BP,CX
+    MOV SI,DI
+    ADD DI,CX
+    SUB DI,1
+    MOV BX,10
+NumSiguiente:
+    XOR DX,DX
+    DIV BX
+    ADD DL,'0'
+    MOV [DI],DL
+    SUB DI,1
+    SUB CX,1
+    CMP CX,0
+    JNE NumSiguiente
+    MOV CX,BP
+    SUB CX,1
+NumBlanco:
+    CMP BYTE PTR [SI],'0'
+    JNE FinNum
+    MOV BYTE PTR [SI],' '
+    ADD SI,1
+    SUB CX,1
+    CMP CX,0
+    JNE NumBlanco
+FinNum:
+    POP BP
+    POP DI
+    POP SI
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+    RET
+PonerNum ENDP
+
+; Lee mapa.txt (Mapa.asm) y llena Snap con las personas de cada zona
+LeerMapaCalor PROC
+    ABRIR_ARCHIVO RutaMapa,0
+    JC FinLeerMapaCalor         ; sin mapa.txt todo queda en cero
+    LEER_ARCHIVO 1872,BufferMapa,ID
+    CERRAR_ARCHIVO ID
+    MOV BP,0
+MapaCalorZona:
+    MOV BX,BP
+    ADD BX,BX
+    MOV SI,OffsetsPersonas[BX]
+    LEA DI,BufferMapa
+    ADD DI,SI
+    MOV CX,3
+    CALL ParseDigitos
+    MOV BX,BP
+    ADD BX,BX
+    MOV Snap[BX],AX
+    ADD BP,1
+    CMP BP,6
+    JNE MapaCalorZona
+FinLeerMapaCalor:
+    RET
+LeerMapaCalor ENDP
+
+; Semana y mes acumulan las lecturas de cada vez que se abre el mapa de calor.
+; Llave de semana = mes x 10 + (dia / 7); llave de mes = mes. Si cambia, ese acumulado reinicia.
+ActualizarHistorial PROC
+    MOV AH,2Ah
+    INT 21H                     ; DH = mes, DL = dia
+    MOV AL,DL
+    MOV AH,0
+    MOV BL,7
+    DIV BL                      ; AL = dia / 7
+    MOV CL,AL
+    MOV AL,DH
+    MOV BL,10
+    MUL BL                      ; AX = mes x 10
+    ADD AL,CL
+    MOV KeySem,AL
+    MOV KeyMes,DH
+    ABRIR_ARCHIVO RutaHistorial,0
+    JC HistorialSumar           ; no existe: arranca en cero
+    LEER_ARCHIVO 26,HistLeido,ID
+    CERRAR_ARCHIVO ID
+    MOV AL,HistLeido
+    CMP AL,KeySem
+    JNE HistorialMes            ; otra semana: reinicia
+    LEA SI,HistLeido+2
+    LEA DI,Sem
+    MOV CX,6
+    CLD
+    REP MOVSW
+HistorialMes:
+    MOV AL,HistLeido+1
+    CMP AL,KeyMes
+    JNE HistorialSumar          ; otro mes: reinicia
+    LEA SI,HistLeido+14
+    LEA DI,Mes
+    MOV CX,6
+    CLD
+    REP MOVSW
+HistorialSumar:
+    MOV BX,0
+HistorialSiguiente:
+    MOV AX,Snap[BX]
+    ADD Sem[BX],AX
+    ADD Mes[BX],AX
+    ADD BX,2
+    CMP BX,12
+    JNE HistorialSiguiente
+    CREAR_ARCHIVO RutaHistorial,32
+    MOV ID,AX
+    JC FinHistorial
+    ESCRIBIR_ARCHIVO ID,26,KeySem
+    CERRAR_ARCHIVO ID
+FinHistorial:
+    RET
+ActualizarHistorial ENDP
+
+; Entrada: SI = 6 palabras con las personas de cada zona (Snap, Sem o Mes).
+; Llena porcentaje, barra (# = 5 %) y cantidad en RowsCalor y la zona mas concurrida en RowMas
+LlenarFilas PROC
+    XOR AX,AX
+    MOV BX,0
+TotalSiguiente:
+    ADD AX,[SI+BX]
+    ADD BX,2
+    CMP BX,12
+    JNE TotalSiguiente
+    MOV TotalCalor,AX
+    MOV PctMax,0
+    MOV MaxVal,0
+    MOV IdxMax,0
+    MOV BP,0
+FilaSiguiente:
+    MOV BX,BP
+    ADD BX,BX
+    MOV AX,[SI+BX]
+    MOV ValorFila,AX
+    MOV PctFila,0
+    CMP TotalCalor,0
+    JE PorcentajeListo
+    MOV BX,100
+    MUL BX                      ; DX:AX = valor x 100
+    MOV BX,TotalCalor
+    DIV BX                      ; AX = porcentaje
+    MOV PctFila,AX
+PorcentajeListo:
+    MOV AX,76
+    MUL BP
+    LEA DI,RowsCalor
+    ADD DI,AX                   ; DI = inicio del renglon de esta zona
+    PUSH DI
+    ADD DI,25
+    MOV AX,PctFila
+    MOV CX,3
+    CALL PonerNum
+    POP DI
+    PUSH DI
+    ADD DI,33                   ; barra de 20 caracteres
+    MOV AX,PctFila
+    MOV BL,5
+    DIV BL                      ; AL = cantidad de #
+    MOV AH,0
+    MOV DX,AX
+    MOV CX,20
+BarraSiguiente:
+    CMP DX,0
+    JE BarraVacio
+    MOV BYTE PTR [DI],'#'
+    SUB DX,1
+    JMP BarraAvanza
+BarraVacio:
+    MOV BYTE PTR [DI],' '
+BarraAvanza:
+    ADD DI,1
+    SUB CX,1
+    CMP CX,0
+    JNE BarraSiguiente
+    POP DI
+    ADD DI,56
+    MOV AX,ValorFila
+    MOV CX,5
+    CALL PonerNum
+    MOV AX,ValorFila
+    CMP AX,MaxVal
+    JC SinNuevoMaximo
+    JE SinNuevoMaximo
+    MOV MaxVal,AX
+    MOV IdxMax,BP
+    MOV AX,PctFila
+    MOV PctMax,AX
+SinNuevoMaximo:
+    ADD BP,1
+    CMP BP,6
+    JNE FilaSiguiente
+    CMP MaxVal,0
+    JE CalorSinDatos
+    LEA SI,NombresZonas
+    MOV AX,20
+    MUL IdxMax
+    ADD SI,AX
+    JMP CalorCopiarNombre
+CalorSinDatos:
+    LEA SI,NombreSinDatos
+CalorCopiarNombre:
+    LEA DI,RowMas+23
+    MOV CX,20
+    CLD
+    REP MOVSB
+    RET
+LlenarFilas ENDP
 
 
 ;==================== PRESSURE GUAGE (2088h) ====================

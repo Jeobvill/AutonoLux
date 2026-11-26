@@ -3,7 +3,7 @@
 ; Guardar como: Configuracion.asm
 ; Pantalla: Configuracion del sistema. Escribe config.txt.
 ; Programa independiente: se compila a Configuracion.exe (emu8086).
-; Necesita Biblioteca.txt en la misma carpeta.
+; Necesita Biblioteca.txt, Dispositivos.asm y Dispositivos_Datos.asm en la misma carpeta.
 ; Teclas en MAYUSCULAS.
 ;*********************************************************
 INCLUDE Biblioteca.txt
@@ -56,6 +56,9 @@ ConfiguracionRen19  DB "|   Opcion a modificar [1-8], [G] Guardar cambios, [ESC]
 ConfiguracionRen20  DB "                                                                            "
 ConfiguracionRen21  DB "|   * Los cambios se aplican al guardar.                                   |"
 ConfiguracionRen22  DB "                                                                            "
+
+; ---- Datos de los devices (LED_Display, Stepper_motor y LCD)
+INCLUDE Dispositivos_Datos.asm
 
 .CODE
 Inicio:
@@ -116,6 +119,24 @@ CapturarValor PROC
     ESCRIBIR_ARCHIVO ID,10,RegistroOpcion
     ESCRIBIR_ARCHIVO ID,LongitudCapturada,CadenaCapturada+2
     ESCRIBIR_ARCHIVO ID,2,FinDeLinea
+    CMP NumeroOpcion,'2'        ; aforo maximo: se muestra en el LED_Display
+    JNE FinCapturarValor
+    XOR AX,AX
+    MOV SI,0
+AforoSiguienteDigito:
+    CMP SI,LongitudCapturada
+    JE AforoListo
+    MOV BL,CadenaCapturada+2[SI]
+    SUB BL,'0'
+    MOV DX,10
+    MUL DX
+    MOV BH,0
+    ADD AX,BX
+    ADD SI,1
+    JMP AforoSiguienteDigito
+AforoListo:
+    CALL MostrarEnLedDisplay
+FinCapturarValor:
     RET
 CapturarValor ENDP
 
@@ -148,5 +169,8 @@ DibujarConfiguracion PROC
     IMPCAD_COLOR LineaMarco,76,23,0,0,0,1Bh
     RET
 DibujarConfiguracion ENDP
+
+; Procedimientos de los devices (LED_Display, Stepper_motor y LCD)
+INCLUDE Dispositivos.asm
 
 END Inicio

@@ -12,27 +12,24 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaJesus         DB "C:\AutonoLux\Jesus",0
     RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
 
-; ---- Zonas (posicion 0 = zona 1 ... posicion 5 = zona 6). Inician vacias
-OcupacionPorZona  DB 0,0,0,0,0,0          ; personas por zona
-LuzPorZona        DB 0,0,0,0,0,0          ; 1 = encendida
-ModoGlobal        DB 'A'                  ; 'A' automatico (la luz sigue a la presencia)
-ZonaSeleccionada  DB 9                    ; 0 a 5, 9 = ninguna
-ZonaActual        DB 0                    ; zona que se esta pintando
+OcupacionPorZona  DB 0,0,0,0,0,0
+LuzPorZona        DB 0,0,0,0,0,0
+ModoGlobal        DB 'A'
+ZonaSeleccionada  DB 9
+ZonaActual        DB 0
 SwitchesLeidos    DB 0
-PesoDeZona        DB 1,2,4,8,16,32        ; bit de cada zona en switches y LEDs
-RenglonDeZona     DB 11,11,11,16,16,16    ; renglon de cada caja del mapa
-ColumnaDeMarca    DB 8,32,56,8,32,56      ; columna de [#] o [ ]
-ColumnaDePersonas DB 14,38,62,14,38,62    ; columna del numero de personas
-; Lugar de cada marca y de cada numero dentro de BufferMapa (renglon x 78 + columna)
+PesoDeZona        DB 1,2,4,8,16,32
+RenglonDeZona     DB 11,11,11,16,16,16
+ColumnaDeMarca    DB 8,32,56,8,32,56
+ColumnaDePersonas DB 14,38,62,14,38,62
 OffsetMarca       DW 866,890,914,1256,1280,1304
 OffsetPersonas    DW 872,896,920,1262,1286,1310
 
-; ---- Dot Matrix: digitos 1 a 6, 5 columnas por digito
 FuenteDigitos     DB 00h,42h,7Fh,40h,00h
                   DB 42h,61h,51h,49h,46h
                   DB 21h,41h,45h,4Bh,31h
@@ -40,8 +37,7 @@ FuenteDigitos     DB 00h,42h,7Fh,40h,00h
                   DB 27h,45h,45h,45h,39h
                   DB 3Ch,4Ah,49h,49h,30h
 
-; ---- Textos cortos que se escriben sobre la pantalla
-TextoNumero       DB "000"      ; resultado de ConvertirATexto
+TextoNumero       DB "000"
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 TextoZona         DB "1"
 MarcaOcupada      DB "[#]"
@@ -49,13 +45,12 @@ MarcaLibre        DB "[ ]"
 TextoLuzOn        DB "ON "
 TextoLuzOff       DB "OFF"
 
-; ---- Coherencia con el Contador: las personas de las zonas salen de las que estan en la sala
 RutaVisitantes    DB "C:\AutonoLux\Jesus\visitantes.txt",0
-RegistroVis       DB 58 DUP(0)    ; ultimo registro de visitantes.txt
-SalaContador      DW 0            ; personas en sala segun el Contador
-EnZonas           DW 0            ; personas ubicadas en zonas
-SinUbicar         DW 0            ; sala - zonas
-Bloqueado         DB 0            ; 1 = se intento ocupar una zona sin personas disponibles
+RegistroVis       DB 58 DUP(0)
+SalaContador      DW 0
+EnZonas           DW 0
+SinUbicar         DW 0
+Bloqueado         DB 0
 TextoEstadoA      DB "En sala (Contador): "
 MSala             DB "000"
 TextoEstadoB      DB "   En zonas: "
@@ -64,10 +59,8 @@ TextoEstadoC      DB "   Sin ubicar: "
 MSin              DB "000"
 TextoEstadoD      DB "               "
 
-; ---- Buffer donde se lee mapa.txt (24 registros de 78 bytes)
 BufferMapa        DB 1872 DUP(?)
 
-; ---- Renglones comunes (banner AUTONOLUX)
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -75,7 +68,6 @@ Logo3             DB "|              / _ \| | | | | || | | |  \| | | | | |  | | 
 Logo4             DB "|             / ___ \ |_| | | || |_| | |\  | |_| | |__| |_| |/  \          |"
 Logo5             DB "|            /_/   \_\___/  |_| \___/|_| \_|\___/|_____\___//_/\_\         |"
 
-; ---- Texto base de mapa.txt: se escribe solo si el archivo no existe
 TextoMapa         DB "+==========================================================================+",13,10
                   DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |",13,10
                   DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |",13,10
@@ -105,23 +97,22 @@ TextoMapa         DB "+=========================================================
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaJesus
     CALL MostrarMapa
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== MAPA DE LA BIBLIOTECA ====================
 
-; Teclas: 1-6 detalle de zona, S leer switches, ESC volver
 MostrarMapa PROC
     ABRIR_ARCHIVO RutaMapa,0
     JC MapaNoExiste
     JMP MapaAbierto
 MapaNoExiste:
-    CALL CrearMapaInicial       ; el archivo no existe: se crea con la pantalla base
+    CALL CrearMapaInicial
     ABRIR_ARCHIVO RutaMapa,0
     JC ErrorAlLeerMapa
 MapaAbierto:
@@ -132,17 +123,17 @@ MapaAbierto:
 MapaEsperarTecla:
     CALL ActualizarMapa
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE MapaSalir
     CMP AL,'S'
     JE MapaLeerSensores
     CMP AL,'1'
-    JC MapaEsperarTecla         ; menor que '1'
+    JC MapaEsperarTecla
     CMP AL,'7'
     JC MapaZonaValida
-    JMP MapaEsperarTecla        ; '7' o mayor
+    JMP MapaEsperarTecla
 MapaZonaValida:
-    SUB AL,'1'                  ; '1' a '6' pasa a 0 a 5
+    SUB AL,'1'
     MOV ZonaSeleccionada,AL
     JMP MapaEsperarTecla
 MapaLeerSensores:
@@ -150,7 +141,7 @@ MapaLeerSensores:
     CALL GuardarMapa
     JMP MapaEsperarTecla
 MapaSalir:
-    CALL GuardarMapa            ; deja en mapa.txt lo que se vio en pantalla
+    CALL GuardarMapa
     RET
 ErrorAlLeerMapa:
     CURSOR 22,3,0
@@ -159,7 +150,6 @@ ErrorAlLeerMapa:
     RET
 MostrarMapa ENDP
 
-; Crea mapa.txt con la pantalla base (solo cuando todavia no existe)
 CrearMapaInicial PROC
     CREAR_ARCHIVO RutaMapa,32
     MOV ID,AX
@@ -168,7 +158,6 @@ CrearMapaInicial PROC
     RET
 CrearMapaInicial ENDP
 
-; Reescribe mapa.txt con el buffer ya actualizado (zonas ocupadas y personas)
 GuardarMapa PROC
     CREAR_ARCHIVO RutaMapa,32
     MOV ID,AX
@@ -179,7 +168,6 @@ FinGuardarMapa:
     RET
 GuardarMapa ENDP
 
-; Dibuja el mapa con los renglones leidos de mapa.txt (cada registro mide 78 bytes)
 DibujarMapa PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR BufferMapa,76,0,0,0,0,1Bh
@@ -209,9 +197,8 @@ DibujarMapa PROC
     RET
 DibujarMapa ENDP
 
-; Repinta lo que cambia: cajas, detalle, Dot Matrix y LEDs
 ActualizarMapa PROC
-    CALL LeerSalaContador       ; la sala manda: zonas <= sala
+    CALL LeerSalaContador
     CALL AjustarASala
     CMP ModoGlobal,'A'
     JNE MapaSinAutomatico
@@ -225,7 +212,6 @@ MapaSinAutomatico:
     RET
 ActualizarMapa ENDP
 
-; Pinta las 6 cajas (zona 0 a 5)
 PintarZonasDelMapa PROC
     MOV ZonaActual,0
 PintarSiguienteZona:
@@ -236,7 +222,6 @@ PintarSiguienteZona:
     RET
 PintarZonasDelMapa ENDP
 
-; Pinta la marca [#] o [ ] y las personas de la zona ZonaActual
 PintarUnaZona PROC
     MOV BL,ZonaActual
     MOV BH,0
@@ -247,7 +232,7 @@ PintarUnaZona PROC
 PintarZonaLibre:
     IMPCAD_COLOR MarcaLibre,3,RenglonDeZona[BX],ColumnaDeMarca[BX],0,0,1Fh
 PintarPersonasDeZona:
-    MOV BL,ZonaActual          ; el macro cambio BX, se carga de nuevo
+    MOV BL,ZonaActual
     MOV BH,0
     MOV AL,OcupacionPorZona[BX]
     CALL ConvertirATexto
@@ -258,20 +243,18 @@ PintarPersonasDeZona:
     RET
 PintarUnaZona ENDP
 
-; Copia la marca y el numero de personas de la zona ZonaActual a BufferMapa
-; (TextoNumero ya trae las personas convertidas a 3 caracteres)
 GuardarZonaEnBuffer PROC
     MOV BL,ZonaActual
     MOV BH,0
     MOV SI,BX
-    ADD SI,SI                   ; las tablas Offset son palabras: posicion x 2
+    ADD SI,SI
     MOV DI,OffsetMarca[SI]
     MOV AL,' '
     CMP OcupacionPorZona[BX],0
     JE GuardarMarca
     MOV AL,'#'
 GuardarMarca:
-    MOV BufferMapa[DI+1],AL     ; el centro de [ ]
+    MOV BufferMapa[DI+1],AL
     MOV DI,OffsetPersonas[SI]
     MOV AL,TextoNumero
     MOV BufferMapa[DI],AL
@@ -282,7 +265,6 @@ GuardarMarca:
     RET
 GuardarZonaEnBuffer ENDP
 
-; Renglon 19: zona elegida, sus personas y el estado de su luz
 PintarDetalleDelMapa PROC
     CMP ZonaSeleccionada,9
     JNE MostrarDetalleDeZona
@@ -308,10 +290,8 @@ DetalleLuzApagada:
     RET
 PintarDetalleDelMapa ENDP
 
-
 ;==================== DEVICES DEL MAPA ====================
 
-; Modo automatico: la luz de cada zona sigue a la presencia
 AplicarModoAutomatico PROC
     MOV BX,0
 AutomaticoSiguienteZona:
@@ -326,13 +306,11 @@ AutomaticoZonaVacia:
     RET
 AplicarModoAutomatico ENDP
 
-; Switches (2084h): un switch por zona. Encendido = ocupada, apagado = vacia
-; Se revisa de la zona 6 a la 1 restando el peso de cada switch (sin AND)
 LeerSwitches PROC
     MOV Bloqueado,0
     MOV DX,2084h
     IN AL,DX
-    CMP AL,128                  ; los bits 7 y 6 no se usan
+    CMP AL,128
     JC SwitchSinBit7
     SUB AL,128
 SwitchSinBit7:
@@ -345,20 +323,20 @@ SwitchSinBit6:
 SwitchSiguienteZona:
     MOV AL,SwitchesLeidos
     CMP AL,PesoDeZona[BX]
-    JC SwitchApagado            ; menor que su peso: switch apagado
+    JC SwitchApagado
     SUB AL,PesoDeZona[BX]
     MOV SwitchesLeidos,AL
     CMP OcupacionPorZona[BX],0
-    JNE SwitchSiguiente         ; ya tenia personas, se queda igual
+    JNE SwitchSiguiente
     CALL ContarEnZonas
     MOV AX,SalaContador
     CMP AX,EnZonas
-    JC SwitchSinPersonas        ; sala < zonas
-    JE SwitchSinPersonas        ; no queda nadie sin ubicar
+    JC SwitchSinPersonas
+    JE SwitchSinPersonas
     MOV OcupacionPorZona[BX],1
     JMP SwitchSiguiente
 SwitchSinPersonas:
-    MOV Bloqueado,1             ; el switch esta encendido pero no hay quien lo ocupe
+    MOV Bloqueado,1
     MOV OcupacionPorZona[BX],0
     JMP SwitchSiguiente
 SwitchApagado:
@@ -372,14 +350,12 @@ FinLeerSwitches:
     RET
 LeerSwitches ENDP
 
-; Dot Matrix (2000h): cada modulo recibe 5 bytes. Si la zona esta ocupada
-; muestra su numero, si no, todo apagado. DX = puerto, SI = lugar en la fuente
 EscribirDotMatrix PROC
     MOV DX,2000h
     MOV SI,0
-    MOV BX,0                    ; BX = zona 0 a 5
+    MOV BX,0
 DotSiguienteModulo:
-    MOV CX,5                    ; 5 columnas por modulo
+    MOV CX,5
 DotSiguienteColumna:
     MOV AL,0
     CMP OcupacionPorZona[BX],0
@@ -398,7 +374,6 @@ DotEscribirColumna:
     RET
 EscribirDotMatrix ENDP
 
-; LEDs (2070h): bits 0-5 = luz de cada zona, bit 6 = modo manual
 EscribirLeds PROC
     MOV AL,0
     MOV BX,0
@@ -419,16 +394,14 @@ LedsEscribir:
     RET
 EscribirLeds ENDP
 
-
 ;==================== CONVERSION ====================
 
 ;==================== COHERENCIA CON EL CONTADOR ====================
 
-; Lee visitantes.txt (Contador.asm), registros de 58 bytes, y deja en SalaContador la sala del ultimo
 LeerSalaContador PROC
     MOV SalaContador,0
     ABRIR_ARCHIVO RutaVisitantes,0
-    JC FinLeerSala              ; sin visitantes.txt no hay nadie en la sala
+    JC FinLeerSala
 VisitanteOtro:
     LEER_ARCHIVO 58,RegistroVis,ID
     JC VisitanteFin
@@ -437,7 +410,7 @@ VisitanteOtro:
 VisitanteFin:
     CERRAR_ARCHIVO ID
     XOR AX,AX
-    MOV SI,19                   ; "sala NNN" empieza en la columna 19
+    MOV SI,19
     MOV CX,3
 SalaDigito:
     MOV BL,RegistroVis[SI]
@@ -460,7 +433,6 @@ FinLeerSala:
     RET
 LeerSalaContador ENDP
 
-; EnZonas = personas ubicadas en las 6 zonas
 ContarEnZonas PROC
     MOV EnZonas,0
     MOV SI,0
@@ -474,14 +446,13 @@ ContarSiguiente:
     RET
 ContarEnZonas ENDP
 
-; Si hay mas personas en zonas que en la sala (salieron o se reinicio el Contador), se liberan zonas
 AjustarASala PROC
     MOV BX,5
 AjustarSiguiente:
     CALL ContarEnZonas
     MOV AX,SalaContador
     CMP AX,EnZonas
-    JNC AjustarListo            ; sala >= zonas
+    JNC AjustarListo
     MOV OcupacionPorZona[BX],0
     CMP BX,0
     JE AjustarListo
@@ -491,7 +462,6 @@ AjustarListo:
     RET
 AjustarASala ENDP
 
-; Renglon 22: "En sala (Contador): NNN   En zonas: N   Sin ubicar: NNN"
 PintarEstadoMapa PROC
     CALL ContarEnZonas
     MOV AX,SalaContador
@@ -523,27 +493,25 @@ SinUbicarOk:
     MOV BL,1Eh
     CMP Bloqueado,0
     JE EstadoColor
-    MOV BL,1Ch                  ; rojo: no hay personas para ocupar otra zona
+    MOV BL,1Ch
 EstadoColor:
     IMPCAD_COLOR TextoEstadoA,70,22,3,0,0,BL
     RET
 PintarEstadoMapa ENDP
 
-; Entrada: AL = numero de 0 a 255.  Salida: TextoNumero = 3 caracteres
-; Resta 100, luego 10, y lo que queda son las unidades
 ConvertirATexto PROC
     MOV TextoNumero,'0'
     MOV TextoNumero+1,'0'
     MOV TextoNumero+2,'0'
 RestarCien:
     CMP AL,100
-    JC RestarDiez               ; AL menor que 100
+    JC RestarDiez
     SUB AL,100
     ADD TextoNumero,1
     JMP RestarCien
 RestarDiez:
     CMP AL,10
-    JC SumarUnidades            ; AL menor que 10
+    JC SumarUnidades
     SUB AL,10
     ADD TextoNumero+1,1
     JMP RestarDiez

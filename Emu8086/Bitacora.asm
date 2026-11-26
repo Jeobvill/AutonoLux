@@ -14,41 +14,38 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaDaniel        DB "C:\AutonoLux\Daniel",0
     RutaBitacora      DB "C:\AutonoLux\Daniel\bitacora.txt",0
 
-; ---- Registros en memoria (hasta 24 registros de 78 bytes)
-BytesLeidos            DW 0     ; bytes que devolvio la lectura del archivo
-BytesEnMemoria         DW 0     ; registros completos x 78
+BytesLeidos            DW 0
+BytesEnMemoria         DW 0
 RegistrosEnMemoria     DB 0
-RegistrosVisibles      DB 0     ; los que cumplen el filtro de zona
-RegistrosContados      DB 0     ; al pintar: cuantos visibles ya se revisaron
+RegistrosVisibles      DB 0
+RegistrosContados      DB 0
 PrimerRegistroDePagina DB 0
-LimiteDePagina         DB 0     ; primer registro de la pagina + 8
-PaginaActual           DB 0     ; empieza en 0
+LimiteDePagina         DB 0
+PaginaActual           DB 0
 TotalPaginas           DB 1
-FiltroDeZona           DB '0'   ; '0' = todas, '1' a '6' = una zona
-CumpleFiltro           DB 0     ; resultado de RegistroCumpleFiltro
+FiltroDeZona           DB '0'
+CumpleFiltro           DB 0
 RenglonActual          DB 0
-ErrorDeArchivo         DB 0     ; 1 = no se pudo leer bitacora.txt
+ErrorDeArchivo         DB 0
 
-; ---- Evento nuevo
 ComandoRobot           DB 0
-TipoDeEvento           DB 'M'   ; 'M' manual (lo escribe el operador), 'R' ronda del Robot
+TipoDeEvento           DB 'M'
 ZonaDelEvento          DB '1'
 LongitudEvento         DW 0
-RellenoEvento          DW 0     ; espacios que faltan para llegar a 30
-CapturaEvento          DB 31,0,32 DUP(0)    ; buffer de DOS: maximo, longitud y texto
+RellenoEvento          DW 0
+CapturaEvento          DB 31,0,32 DUP(0)
 
-; ---- Pedazos del registro de bitacora.txt (78 bytes por evento)
 TextoInicioDeRegistro  DB "| "
-TextoHora              DB "00:00"           ; se rellena con la hora real (HoraEnTexto)
+TextoHora              DB "00:00"
 TextoAntesDeZona       DB "  Z"
 TextoEspacio           DB " "
 TextoDosEspacios       DB "  "
-TextoRellenoEvento     DB "                              "     ; 30 espacios
+TextoRellenoEvento     DB "                              "
 TextoUsuarioAdmin      DB "ADMIN"
 TextoUsuarioRobot      DB "ROBOT"
 TextoFinDeRegistro     DB "      |",13,10
@@ -60,7 +57,6 @@ NombreZona4            DB "Hemeroteca        "
 NombreZona5            DB "Estantes A-F      "
 NombreZona6            DB "Sala de Grupos    "
 
-; ---- Textos cortos y mensajes
 TextoPagina            DB "1"
 TextoTotalPaginas      DB "1"
 TextoPedirZona         DB "Zona [1-6]: "
@@ -74,10 +70,8 @@ MensajeRondaEnCurso    DB "Robot en ronda... ESC para detenerlo"
 MensajeImpresa         DB "Bitacora enviada a la impresora. Presione una tecla."
 MensajeErrorArchivo    DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
-; ---- Buffer donde se lee bitacora.txt
 BufferBitacora         DB 1872 DUP(?)
 
-; ---- Renglones comunes (banner AUTONOLUX) y propios de la pantalla
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -92,7 +86,6 @@ BitacoraRen18     DB "|---------------------------------------------------------
 BitacoraRen19     DB "| [A] Agregar  [S] Siguiente  [P] Anterior  [F] Filtrar  [I] Imprimir      |"
 BitacoraRen20     DB "| [R] Ronda del Robot  [ESC] Volver                                        |"
 
-; ---- Texto base de bitacora.txt: vacia (sin eventos inventados). Se escribe solo si el archivo no existe
 TextoBitacora     DB "|   (sin eventos registrados todavia)                                      |",13,10
                   DB "|                                                                          |",13,10
                   DB "|                                                                          |",13,10
@@ -106,17 +99,16 @@ TextoBitacora     DB "|   (sin eventos registrados todavia)                     
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaDaniel
     CALL ControlBitacora
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== BITACORA DE EVENTOS ====================
 
-; Teclas: A agregar, S siguiente, P anterior, F filtrar, I imprimir, R ronda, ESC volver
 ControlBitacora PROC
     MOV ErrorDeArchivo,0
     CALL CargarBitacora
@@ -125,7 +117,7 @@ ControlBitacora PROC
 BitacoraRedibujar:
     CALL DibujarBitacora
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE BitacoraSalir
     CMP AL,'A'
     JE BitacoraTeclaAgregar
@@ -162,10 +154,8 @@ BitacoraSalir:
     RET
 ControlBitacora ENDP
 
-
 ;==================== ARCHIVO ====================
 
-; Lee bitacora.txt al buffer y cuenta los registros. Si no existe, lo crea con los de ejemplo
 CargarBitacora PROC
     ABRIR_ARCHIVO RutaBitacora,0
     JC BitacoraNoExiste
@@ -189,7 +179,6 @@ ErrorAlLeerBitacora:
     RET
 CargarBitacora ENDP
 
-; Crea bitacora.txt con 8 eventos de ejemplo (solo cuando todavia no existe)
 CrearBitacoraInicial PROC
     CREAR_ARCHIVO RutaBitacora,32
     MOV ID,AX
@@ -198,14 +187,13 @@ CrearBitacoraInicial PROC
     RET
 CrearBitacoraInicial ENDP
 
-; Cada 78 bytes leidos es un registro
 ContarRegistros PROC
     MOV RegistrosEnMemoria,0
     MOV BytesEnMemoria,0
     MOV AX,BytesLeidos
 ContarSiguienteRegistro:
     CMP AX,78
-    JC FinContarRegistros       ; quedan menos de 78 bytes
+    JC FinContarRegistros
     SUB AX,78
     ADD RegistrosEnMemoria,1
     ADD BytesEnMemoria,78
@@ -214,20 +202,17 @@ FinContarRegistros:
     RET
 ContarRegistros ENDP
 
-; Agrega un registro al final de bitacora.txt.
-; Al leer el archivo completo el puntero queda al final, y lo que se escribe despues se agrega.
-; Entrada: TipoDeEvento, ZonaDelEvento y, si es 'M', LongitudEvento y CapturaEvento
 AgregarEventoABitacora PROC
     ABRIR_ARCHIVO RutaBitacora,2
     JC FinAgregarEvento
     LEER_ARCHIVO 1872,BufferBitacora,ID
     JC FinAgregarEvento
     CMP AX,1872
-    JC AgregarHayLugar          ; menos de 24 registros
-    CERRAR_ARCHIVO ID           ; bitacora llena
+    JC AgregarHayLugar
+    CERRAR_ARCHIVO ID
     RET
 AgregarHayLugar:
-    MOV DI,OFFSET TextoHora      ; hora real del sistema
+    MOV DI,OFFSET TextoHora
     CALL HoraEnTexto
     ESCRIBIR_ARCHIVO ID,2,TextoInicioDeRegistro
     ESCRIBIR_ARCHIVO ID,5,TextoHora
@@ -244,11 +229,11 @@ AgregarEventoDeRonda:
     MOV LongitudEvento,26
     ESCRIBIR_ARCHIVO ID,26,TextoEventoRonda
 AgregarRellenarEvento:
-    MOV AX,30                   ; el evento ocupa 30 posiciones
+    MOV AX,30
     SUB AX,LongitudEvento
     MOV RellenoEvento,AX
     CMP RellenoEvento,0
-    JE AgregarEscribirUsuario   ; escribir 0 bytes borraria el archivo
+    JE AgregarEscribirUsuario
     ESCRIBIR_ARCHIVO ID,RellenoEvento,TextoRellenoEvento
 AgregarEscribirUsuario:
     ESCRIBIR_ARCHIVO ID,2,TextoDosEspacios
@@ -265,13 +250,12 @@ FinAgregarEvento:
     RET
 AgregarEventoABitacora ENDP
 
-; Escribe la hora real de DOS (INT 21h/2Ch) como "HH:MM" en 5 bytes.  Entrada: DI = destino
 HoraEnTexto PROC
     MOV AH,2Ch
-    INT 21H                     ; CH = horas, CL = minutos
+    INT 21H
     PUSH CX
     MOV AL,CH
-    AAM                         ; AH = decenas, AL = unidades
+    AAM
     ADD AX,3030H
     MOV [DI],AH
     MOV [DI+1],AL
@@ -285,9 +269,6 @@ HoraEnTexto PROC
     RET
 HoraEnTexto ENDP
 
-
-
-; Escribe los 18 caracteres del nombre de la zona ZonaDelEvento
 EscribirNombreDeZona PROC
     CMP ZonaDelEvento,'1'
     JNE NombreNoEsZona1
@@ -318,15 +299,12 @@ NombreNoEsZona5:
     RET
 EscribirNombreDeZona ENDP
 
-
 ;==================== FILTRO Y PAGINAS ====================
 
-; Entrada: SI = inicio del registro en BufferBitacora.  Salida: CumpleFiltro (1 o 0)
-; La zona de cada registro es el caracter del byte 10 (la X de "ZX")
 RegistroCumpleFiltro PROC
     MOV AL,FiltroDeZona
     CMP AL,'0'
-    JE RegistroSiCumple         ; sin filtro: entran todos
+    JE RegistroSiCumple
     MOV AL,BufferBitacora[SI+10]
     CMP AL,FiltroDeZona
     JE RegistroSiCumple
@@ -337,7 +315,6 @@ RegistroSiCumple:
     RET
 RegistroCumpleFiltro ENDP
 
-; Cuenta los registros que cumplen el filtro
 CalcularRegistrosVisibles PROC
     MOV RegistrosVisibles,0
     MOV SI,0
@@ -355,7 +332,6 @@ FinCalcularVisibles:
     RET
 CalcularRegistrosVisibles ENDP
 
-; Paginas de 8 registros: cada vez que quedan registros se suma una pagina y se restan 8
 CalcularPaginas PROC
     MOV AL,RegistrosVisibles
     MOV TotalPaginas,0
@@ -364,18 +340,17 @@ PaginasSiguiente:
     JE FinCalcularPaginas
     ADD TotalPaginas,1
     CMP AL,8
-    JC FinCalcularPaginas       ; quedaban menos de 8
+    JC FinCalcularPaginas
     SUB AL,8
     JMP PaginasSiguiente
 FinCalcularPaginas:
     CMP TotalPaginas,0
     JNE PaginasListas
-    MOV TotalPaginas,1          ; sin registros se muestra la pagina 1 de 1
+    MOV TotalPaginas,1
 PaginasListas:
     RET
 CalcularPaginas ENDP
 
-; Primer registro de la pagina actual = PaginaActual x 8 (sumando 8 por pagina)
 CalcularPrimerRegistro PROC
     MOV PrimerRegistroDePagina,0
     MOV CL,PaginaActual
@@ -396,7 +371,7 @@ IrPaginaSiguiente PROC
     MOV AL,PaginaActual
     ADD AL,1
     CMP AL,TotalPaginas
-    JE FinPaginaSiguiente       ; ya es la ultima pagina
+    JE FinPaginaSiguiente
     ADD PaginaActual,1
 FinPaginaSiguiente:
     RET
@@ -404,16 +379,14 @@ IrPaginaSiguiente ENDP
 
 IrPaginaAnterior PROC
     CMP PaginaActual,0
-    JE FinPaginaAnterior        ; ya es la primera pagina
+    JE FinPaginaAnterior
     SUB PaginaActual,1
 FinPaginaAnterior:
     RET
 IrPaginaAnterior ENDP
 
-
 ;==================== DIBUJO ====================
 
-; Dibuja el marco, la pagina y los registros de la pagina actual
 DibujarBitacora PROC
     CALL CalcularRegistrosVisibles
     CALL CalcularPaginas
@@ -428,7 +401,7 @@ DibujarBitacora PROC
     IMPCAD_COLOR BitacoraRen07,76,7,0,0,0,1Eh
     IMPCAD_COLOR BitacoraRen08,76,8,0,0,0,17h
     IMPCAD_COLOR BitacoraRen09,76,9,0,0,0,1Eh
-    MOV RenglonActual,10        ; renglones 10 a 17: lugar de los 8 registros
+    MOV RenglonActual,10
 DibujarRenglonVacio:
     IMPCAD_COLOR BitacoraRenVacio,76,RenglonActual,0,0,0,1Fh
     ADD RenglonActual,1
@@ -441,7 +414,7 @@ DibujarRenglonVacio:
     IMPCAD_COLOR BitacoraRenVacio,76,22,0,0,0,1Fh
     IMPCAD_COLOR LineaMarco,76,23,0,0,0,1Bh
     MOV AL,PaginaActual
-    ADD AL,'1'                  ; la pagina 0 se muestra como 1
+    ADD AL,'1'
     MOV TextoPagina,AL
     MOV AL,TotalPaginas
     ADD AL,'0'
@@ -453,8 +426,6 @@ DibujarRenglonVacio:
     RET
 DibujarBitacora ENDP
 
-; Revisa los registros en orden; los que cumplen el filtro se cuentan, y los que caen
-; dentro de la pagina actual se pintan en los renglones 10 a 17
 PintarRegistrosDePagina PROC
     CALL CalcularPrimerRegistro
     MOV RegistrosContados,0
@@ -468,9 +439,9 @@ PintarRevisarRegistro:
     JNE PintarAvanzarRegistro
     MOV AL,RegistrosContados
     CMP AL,PrimerRegistroDePagina
-    JC PintarContarRegistro     ; todavia no llega a la pagina
+    JC PintarContarRegistro
     CMP AL,LimiteDePagina
-    JE FinPintarRegistros       ; ya se pintaron los 8 de la pagina
+    JE FinPintarRegistros
     IMPCAD_COLOR BufferBitacora[SI],76,RenglonActual,0,0,0,1Fh
     ADD RenglonActual,1
 PintarContarRegistro:
@@ -482,10 +453,8 @@ FinPintarRegistros:
     RET
 PintarRegistrosDePagina ENDP
 
-
 ;==================== FORMULARIOS ====================
 
-; Tecla A: pide zona y evento, agrega el registro y vuelve a leer el archivo
 PedirEventoNuevo PROC
     CMP RegistrosEnMemoria,24
     JNE EventoHayLugar
@@ -497,9 +466,9 @@ EventoHayLugar:
     CURSOR 21,15,0
     RASTREO
     CMP AL,'1'
-    JC EventoCancelado          ; menor que '1'
+    JC EventoCancelado
     CMP AL,'7'
-    JC EventoZonaValida         ; '1' a '6'
+    JC EventoZonaValida
 EventoCancelado:
     RET
 EventoZonaValida:
@@ -508,7 +477,7 @@ EventoZonaValida:
     IMPCAD_COLOR TextoPedirEvento,8,22,3,0,0,1Eh
     CURSOR 22,11,0
     LECTURA_CADENA CapturaEvento
-    MOV AL,CapturaEvento+1      ; cuantos caracteres se escribieron
+    MOV AL,CapturaEvento+1
     CMP AL,0
     JE EventoCancelado
     MOV AH,0
@@ -519,15 +488,14 @@ EventoZonaValida:
     RET
 PedirEventoNuevo ENDP
 
-; Tecla F: pide la zona a mostrar (0 = todas)
 PedirFiltro PROC
     IMPCAD_COLOR TextoPedirFiltro,29,21,3,0,0,1Eh
     CURSOR 21,32,0
     RASTREO
     CMP AL,'0'
-    JC FiltroCancelado          ; menor que '0'
+    JC FiltroCancelado
     CMP AL,'7'
-    JC FiltroValido             ; '0' a '6'
+    JC FiltroValido
 FiltroCancelado:
     RET
 FiltroValido:
@@ -536,10 +504,8 @@ FiltroValido:
     RET
 PedirFiltro ENDP
 
-
 ;==================== PRINTER ====================
 
-; Tecla I: manda a la impresora los registros que cumplen el filtro y hace salto de pagina
 ImprimirBitacora PROC
     MOV SI,0
 ImprimirSiguienteRegistro:
@@ -551,7 +517,7 @@ ImprimirSiguienteRegistro:
     ADD SI,78
     JMP ImprimirSiguienteRegistro
 ImprimirEsteRegistro:
-    MOV CX,78                   ; un registro mide 78 bytes (incluye CR LF)
+    MOV CX,78
 ImprimirSiguienteLetra:
     IMPRIMIR BufferBitacora[SI]
     ADD SI,1
@@ -566,14 +532,11 @@ ImprimirTerminar:
     RET
 ImprimirBitacora ENDP
 
-
 ;==================== ROBOT (puertos 9 y 11) ====================
 
-; Tecla R: el Robot recorre las 6 zonas. En cada una avanza, enciende la lampara,
-; se registra la visita y apaga la lampara. Necesita lugar para 6 registros
 RondaDelRobot PROC
     CMP RegistrosEnMemoria,19
-    JC RondaHayLugar            ; hay 18 registros o menos
+    JC RondaHayLugar
     IMPCAD_COLOR MensajeRondaSinLugar,59,21,3,0,0,1Ch
     RASTREO
     RET
@@ -582,29 +545,29 @@ RondaHayLugar:
     MOV ZonaDelEvento,'1'
     IMPCAD_COLOR MensajeRondaEnCurso,36,21,3,0,0,1Eh
 RondaSiguienteZona:
-    MOV AH,1                    ; INT 16h/1: hay tecla en el buffer?
+    MOV AH,1
     INT 16H
     JZ RondaSinTecla
     MOV AH,0
     INT 16H
-    CMP AL,27                   ; ESC detiene al Robot
+    CMP AL,27
     JE RondaCancelada
 RondaSinTecla:
-    MOV AL,4                    ; 4 = examinar lo que hay enfrente
+    MOV AL,4
     CALL EnviarComandoRobot
     MOV DX,10
-    IN AL,DX                    ; puerto 10: 255 = pared
+    IN AL,DX
     CMP AL,255
     JNE RondaAvanzar
-    MOV AL,3                    ; 3 = girar a la derecha para no chocar
+    MOV AL,3
     CALL EnviarComandoRobot
 RondaAvanzar:
-    MOV AL,1                    ; 1 = avanzar
+    MOV AL,1
     CALL EnviarComandoRobot
-    MOV AL,5                    ; 5 = encender la lampara
+    MOV AL,5
     CALL EnviarComandoRobot
     CALL AgregarEventoABitacora
-    MOV AL,6                    ; 6 = apagar la lampara
+    MOV AL,6
     CALL EnviarComandoRobot
     ADD ZonaDelEvento,1
     CMP ZonaDelEvento,'7'
@@ -615,7 +578,7 @@ RondaAvanzar:
     RASTREO
     RET
 RondaCancelada:
-    MOV AL,6                    ; 6 = apagar la lampara antes de parar
+    MOV AL,6
     CALL EnviarComandoRobot
     MOV TipoDeEvento,'M'
     CALL CargarBitacora
@@ -624,9 +587,6 @@ RondaCancelada:
     RET
 RondaDelRobot ENDP
 
-; Entrada: AL = comando. Puerto 9 = comando, puerto 10 = dato, puerto 11 = estado
-; (bit 0 dato nuevo, bit 1 ocupado, bit 2 el ultimo comando fallo).
-; Si se manda un comando con el Robot ocupado lo rechaza ("busy!"), por eso se espera antes y despues.
 EnviarComandoRobot PROC
     MOV ComandoRobot,AL
     CALL EsperarRobotLibre
@@ -638,28 +598,26 @@ EnviarComandoRobot PROC
     RET
 EnviarComandoRobot ENDP
 
-; Espera hasta que el bit 1 (ocupado) del puerto 11 sea 0
 EsperarRobotLibre PROC
     PUSH SI
-    MOV SI,60000                ; limite: nunca se queda esperando para siempre
+    MOV SI,60000
 RobotLeerEstado:
     MOV DX,11
     IN AL,DX
     CMP AL,4
     JC RobotSinBit2
-    SUB AL,4                    ; se quita el bit 2 (comando fallido)
+    SUB AL,4
 RobotSinBit2:
     CMP AL,2
-    JC RobotLibre               ; bit 1 apagado: ya no esta ocupado
+    JC RobotLibre
     SUB SI,1
     CMP SI,0
-    JNE RobotLeerEstado         ; 2 o 3: bit 1 encendido, sigue ocupado
+    JNE RobotLeerEstado
 RobotLibre:
     POP SI
     RET
 EsperarRobotLibre ENDP
 
-; Pausa corta para que el Robot alcance a empezar el comando
 EsperarUnMomento PROC
     MOV CX,300
 EsperarVuelta:

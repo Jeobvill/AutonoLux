@@ -13,25 +13,22 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaDaniel        DB "C:\AutonoLux\Daniel",0
     RutaCalor         DB "C:\AutonoLux\Daniel\calor.txt",0
 
-; ---- Periodo en pantalla y porcentaje de la zona mas concurrida de cada periodo
-PeriodoActual     DB 'H'        ; 'H' hoy, 'S' semana, 'M' mes
-; ---- Datos reales: mapa.txt (personas por zona) y calor_hist.txt (lecturas acumuladas)
+PeriodoActual     DB 'H'
 RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
 RutaHistorial     DB "C:\AutonoLux\Daniel\calor_hist.txt",0
 BufferMapa        DB 1872 DUP(0)
-OffsetsPersonas   DW 872,896,920,1262,1286,1310   ; columna de personas de cada zona en mapa.txt
-; Historial (26 bytes seguidos): llave semana, llave mes, 6 palabras semana, 6 palabras mes
+OffsetsPersonas   DW 872,896,920,1262,1286,1310
 KeySem            DB 0
 KeyMes            DB 0
 Sem               DW 6 DUP(0)
 Mes               DW 6 DUP(0)
 HistLeido         DB 26 DUP(0)
-Snap              DW 6 DUP(0)    ; personas por zona en este momento (hoy)
+Snap              DW 6 DUP(0)
 TotalCalor        DW 0
 ValorFila         DW 0
 PctFila           DW 0
@@ -50,17 +47,13 @@ RowHeader         DB "| #  ZONA                  OCUP.   INTENSIDAD            P
 RowIntens         DB "| Intensidad: cada # = 5 % de las personas contadas en el periodo          |"
 RowMas            DB "| Zona mas concurrida: Recepcion                                           |"
 
-; ---- Textos cortos que se escriben sobre la pantalla
 TextoPeriodoHoy     DB "HOY   "
 TextoPeriodoSemana  DB "SEMANA"
 TextoPeriodoMes     DB "MES   "
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
-; ---- Buffer donde se lee calor.txt: 24 registros de la pantalla (hoy),
-;      6 del ranking de la semana y 6 del ranking del mes (36 de 78 bytes)
 BufferCalor       DB 2808 DUP(?)
 
-; ---- Texto base de calor.txt: se escribe solo si el archivo no existe
 TextoCalor        DB "+==========================================================================+",13,10
                   DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |",13,10
                   DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |",13,10
@@ -102,38 +95,37 @@ TextoCalor        DB "+=========================================================
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaDaniel
     CALL ControlCalor
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== MAPA DE CALOR ====================
 
-; Teclas: H hoy, S semana, M mes, ESC volver
 ControlCalor PROC
     ABRIR_ARCHIVO RutaCalor,0
     JC CalorNoExiste
     JMP CalorAbierto
 CalorNoExiste:
-    CALL CrearCalorInicial      ; el archivo no existe: se crea con la pantalla base
+    CALL CrearCalorInicial
     ABRIR_ARCHIVO RutaCalor,0
     JC ErrorAlLeerCalor
 CalorAbierto:
     LEER_ARCHIVO 2808,BufferCalor,ID
     JC ErrorAlLeerCalor
     CERRAR_ARCHIVO ID
-    CALL LeerMapaCalor          ; personas reales por zona (mapa.txt)
-    CALL ActualizarHistorial    ; acumula semana y mes (calor_hist.txt)
+    CALL LeerMapaCalor
+    CALL ActualizarHistorial
     MOV PeriodoActual,'H'
 CalorRedibujar:
     CALL DibujarCalor
     CALL PintarPeriodo
 CalorEsperarTecla:
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE CalorSalir
     CMP AL,'H'
     JE CalorElegirHoy
@@ -160,7 +152,6 @@ ErrorAlLeerCalor:
     RET
 ControlCalor ENDP
 
-; Crea calor.txt con la pantalla base (solo cuando todavia no existe)
 CrearCalorInicial PROC
     CREAR_ARCHIVO RutaCalor,32
     MOV ID,AX
@@ -169,7 +160,6 @@ CrearCalorInicial PROC
     RET
 CrearCalorInicial ENDP
 
-; Dibuja la pantalla de HOY con los renglones leidos de calor.txt (cada registro mide 78 bytes)
 DibujarCalor PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR BufferCalor,76,0,0,0,0,1Bh
@@ -199,7 +189,6 @@ DibujarCalor PROC
     RET
 DibujarCalor ENDP
 
-; Escribe el periodo, calcula el ranking con datos reales y mueve el Pressure Guage
 PintarPeriodo PROC
     CMP PeriodoActual,'S'
     JE PintarPeriodoSemana
@@ -233,7 +222,6 @@ PintarPeriodo ENDP
 
 ;==================== DATOS REALES ====================
 
-; Convierte los CX caracteres que empiezan en [DI] en un numero (AX); ignora espacios
 ParseDigitos PROC
     XOR AX,AX
 ParseSiguiente:
@@ -257,7 +245,6 @@ FinParse:
     RET
 ParseDigitos ENDP
 
-; Escribe AX como CX caracteres en [DI], sin ceros a la izquierda
 PonerNum PROC
     PUSH AX
     PUSH BX
@@ -301,10 +288,9 @@ FinNum:
     RET
 PonerNum ENDP
 
-; Lee mapa.txt (Mapa.asm) y llena Snap con las personas de cada zona
 LeerMapaCalor PROC
     ABRIR_ARCHIVO RutaMapa,0
-    JC FinLeerMapaCalor         ; sin mapa.txt todo queda en cero
+    JC FinLeerMapaCalor
     LEER_ARCHIVO 1872,BufferMapa,ID
     CERRAR_ARCHIVO ID
     MOV BP,0
@@ -326,29 +312,27 @@ FinLeerMapaCalor:
     RET
 LeerMapaCalor ENDP
 
-; Semana y mes acumulan las lecturas de cada vez que se abre el mapa de calor.
-; Llave de semana = mes x 10 + (dia / 7); llave de mes = mes. Si cambia, ese acumulado reinicia.
 ActualizarHistorial PROC
     MOV AH,2Ah
-    INT 21H                     ; DH = mes, DL = dia
+    INT 21H
     MOV AL,DL
     MOV AH,0
     MOV BL,7
-    DIV BL                      ; AL = dia / 7
+    DIV BL
     MOV CL,AL
     MOV AL,DH
     MOV BL,10
-    MUL BL                      ; AX = mes x 10
+    MUL BL
     ADD AL,CL
     MOV KeySem,AL
     MOV KeyMes,DH
     ABRIR_ARCHIVO RutaHistorial,0
-    JC HistorialSumar           ; no existe: arranca en cero
+    JC HistorialSumar
     LEER_ARCHIVO 26,HistLeido,ID
     CERRAR_ARCHIVO ID
     MOV AL,HistLeido
     CMP AL,KeySem
-    JNE HistorialMes            ; otra semana: reinicia
+    JNE HistorialMes
     LEA SI,HistLeido+2
     LEA DI,Sem
     MOV CX,6
@@ -357,7 +341,7 @@ ActualizarHistorial PROC
 HistorialMes:
     MOV AL,HistLeido+1
     CMP AL,KeyMes
-    JNE HistorialSumar          ; otro mes: reinicia
+    JNE HistorialSumar
     LEA SI,HistLeido+14
     LEA DI,Mes
     MOV CX,6
@@ -381,8 +365,6 @@ FinHistorial:
     RET
 ActualizarHistorial ENDP
 
-; Entrada: SI = 6 palabras con las personas de cada zona (Snap, Sem o Mes).
-; Llena porcentaje, barra (# = 5 %) y cantidad en RowsCalor y la zona mas concurrida en RowMas
 LlenarFilas PROC
     XOR AX,AX
     MOV BX,0
@@ -405,15 +387,15 @@ FilaSiguiente:
     CMP TotalCalor,0
     JE PorcentajeListo
     MOV BX,100
-    MUL BX                      ; DX:AX = valor x 100
+    MUL BX
     MOV BX,TotalCalor
-    DIV BX                      ; AX = porcentaje
+    DIV BX
     MOV PctFila,AX
 PorcentajeListo:
     MOV AX,76
     MUL BP
     LEA DI,RowsCalor
-    ADD DI,AX                   ; DI = inicio del renglon de esta zona
+    ADD DI,AX
     PUSH DI
     ADD DI,25
     MOV AX,PctFila
@@ -421,10 +403,10 @@ PorcentajeListo:
     CALL PonerNum
     POP DI
     PUSH DI
-    ADD DI,33                   ; barra de 20 caracteres
+    ADD DI,33
     MOV AX,PctFila
     MOV BL,5
-    DIV BL                      ; AL = cantidad de #
+    DIV BL
     MOV AH,0
     MOV DX,AX
     MOV CX,20
@@ -475,10 +457,8 @@ CalorCopiarNombre:
     RET
 LlenarFilas ENDP
 
-
 ;==================== PRESSURE GUAGE (2088h) ====================
 
-; Entrada: AL = porcentaje de la zona mas concurrida (el formato del device es un SUPUESTO)
 EscribirPressureGuage PROC
     MOV DX,2088h
     OUT DX,AL

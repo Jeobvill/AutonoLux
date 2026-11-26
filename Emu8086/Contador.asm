@@ -12,46 +12,40 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaJesus         DB "C:\AutonoLux\Jesus",0
     RutaVisitantes    DB "C:\AutonoLux\Jesus\visitantes.txt",0
 
-; ---- Contador de visitantes (inician en cero)
 PersonasEnSala    DB 0
 EntradasDelDia    DB 0
 SalidasDelDia     DB 0
 PicoDelDia        DB 0
 AforoMaximo       DB 60
-Porcentaje        DB 0      ; porcentaje de aforo ocupado
-CeldasBarra       DW 0      ; celdas '#' de la barra (1 celda = 3 personas)
-MensajeContador   DB 0      ; 0 ninguno, 1 sala llena, 2 sala vacia, 3 hay gente en zonas, 4 reiniciado
-TipoDeEvento      DB 'E'    ; 'I' inicio, 'E' entra, 'S' sale (para visitantes.txt)
+Porcentaje        DB 0
+CeldasBarra       DW 0
+MensajeContador   DB 0
+TipoDeEvento      DB 'E'
 BotonesLeidos     DB 0
 
-; ---- Coherencia con el Mapa: no salen personas que estan ubicadas en una zona
 RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
 BufferMapa        DB 1872 DUP(0)
-OffsetsPersonas   DW 872,896,920,1262,1286,1310   ; columna de personas de cada zona en mapa.txt
+OffsetsPersonas   DW 872,896,920,1262,1286,1310
 ZonasContadas     DW 0
 
-; ---- Variables de la resta del catedratico: restaR = restaN1 - restaN2
 restaN1           DB 0
 restaN2           DB 0
-restaR            DB 0      ; lugares libres
+restaR            DB 0
 
-; ---- Seven Segment: segmentos de los digitos 0 a 9
 Segmentos         DB 3Fh,06h,5Bh,4Fh,66h,6Dh,7Dh,07h,7Fh,6Fh
 
-; ---- Textos cortos y mensajes (52 caracteres cada mensaje)
-TextoNumero       DB "000"      ; resultado de ConvertirATexto
+TextoNumero       DB "000"
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 TextoSalaLlena    DB "Aforo maximo alcanzado. No puede entrar nadie mas.  "
 TextoSalaVacia    DB "La sala esta vacia. No puede salir nadie.           "
 TextoZonasConGente DB "Hay personas en zonas del Mapa: liberelas para salir"
 TextoReiniciado   DB "Contadores reiniciados.                             "
 
-; ---- Pedazos del registro de visitantes.txt (58 bytes por evento)
 TextoEvento       DB "Evento "
 TextoInicio       DB "INICIO"
 TextoEntra        DB "ENTRA "
@@ -62,7 +56,6 @@ TextoSalidas      DB " salidas "
 TextoPico         DB " pico "
 FinDeLinea        DB 13,10
 
-; ---- Renglones comunes (banner AUTONOLUX) y propios de la pantalla
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -90,17 +83,16 @@ ContadorRen22     DB "|                                                         
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaJesus
     CALL ControlContador
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== CONTADOR DE VISITANTES ====================
 
-; Teclas: + entra, - sale, B botones, R reinicia, ESC volver
 ControlContador PROC
     CREAR_ARCHIVO RutaVisitantes,32
     MOV ID,AX
@@ -113,21 +105,21 @@ ContadorErrorCrear:
     RET
 ContadorIniciar:
     MOV MensajeContador,0
-    MOV TipoDeEvento,'I'        ; primer registro: estado de arranque
+    MOV TipoDeEvento,'I'
     CALL RegistrarVisita
 ContadorRedibujar:
     CALL DibujarContador
     CALL PintarDatosContador
     CALL EscribirSieteSegmentos
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JNE ContadorOtraTecla
     CERRAR_ARCHIVO ID
     RET
 ContadorOtraTecla:
     CMP AL,'+'
     JE ContadorEntra
-    CMP AL,'='                  ; '+' sin Shift
+    CMP AL,'='
     JE ContadorEntra
     CMP AL,'-'
     JE ContadorSale
@@ -150,7 +142,6 @@ ContadorReiniciar:
     JMP ContadorRedibujar
 ControlContador ENDP
 
-; Dibuja la pantalla del contador (renglones fijos)
 DibujarContador PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR LineaMarco,76,0,0,0,0,1Bh
@@ -180,8 +171,6 @@ DibujarContador PROC
     RET
 DibujarContador ENDP
 
-; Escribe sobre la pantalla: sala, porcentaje, lugares libres, barra,
-; entradas, salidas, pico y mensaje
 PintarDatosContador PROC
     CALL CalcularPorcentaje
     CALL CalcularLugaresLibres
@@ -212,7 +201,6 @@ ContadorSinBarra:
     RET
 PintarDatosContador ENDP
 
-; Renglon 20 segun MensajeContador
 PintarMensajeContador PROC
     CMP MensajeContador,1
     JE MensajeSalaLlena
@@ -237,15 +225,13 @@ MensajeReiniciado:
     RET
 PintarMensajeContador ENDP
 
-; Porcentaje de aforo y celdas de la barra: cada grupo de 3 personas
-; suma 5 % y 1 celda; si sobran 1 o 2 personas suman 2 o 3 %
 CalcularPorcentaje PROC
     MOV AL,PersonasEnSala
     MOV CeldasBarra,0
     MOV Porcentaje,0
 ContarGrupoDeTres:
     CMP AL,3
-    JC SobranPersonas           ; quedan menos de 3
+    JC SobranPersonas
     SUB AL,3
     ADD CeldasBarra,1
     ADD Porcentaje,5
@@ -261,28 +247,24 @@ FinPorcentaje:
     RET
 CalcularPorcentaje ENDP
 
-; Lugares libres = aforo maximo - personas en sala  (resta del catedratico)
 CalcularLugaresLibres PROC
-    MOV AL,AforoMaximo          ; se cargan los dos numeros
+    MOV AL,AforoMaximo
     MOV restaN1,AL
     MOV AL,PersonasEnSala
     MOV restaN2,AL
-    ; ---- resta tal como la dio el catedratico ----
     mov al,restaN1
     mov bl,restaN2
     sub al,bl
     mov restaR,al
-    ; ----------------------------------------------
     RET
 CalcularLugaresLibres ENDP
 
-; Entra una persona (tecla + o boton 0)
 RegistrarEntrada PROC
     MOV MensajeContador,0
     MOV AL,PersonasEnSala
     CMP AL,AforoMaximo
     JNE EntradaConLugar
-    MOV MensajeContador,1       ; sala llena
+    MOV MensajeContador,1
     RET
 EntradaConLugar:
     ADD PersonasEnSala,1
@@ -292,8 +274,8 @@ EntradaConLugar:
 EntradaRevisarPico:
     MOV AL,PicoDelDia
     CMP AL,PersonasEnSala
-    JC EntradaNuevoPico         ; el pico es menor que la sala
-    JMP EntradaGuardar          ; el pico ya es mayor o igual
+    JC EntradaNuevoPico
+    JMP EntradaGuardar
 EntradaNuevoPico:
     MOV AL,PersonasEnSala
     MOV PicoDelDia,AL
@@ -303,11 +285,10 @@ EntradaGuardar:
     RET
 RegistrarEntrada ENDP
 
-; Suma las personas de las 6 zonas de mapa.txt (Mapa.asm) en ZonasContadas
 PersonasEnZonas PROC
     MOV ZonasContadas,0
     ABRIR_ARCHIVO RutaMapa,0
-    JC FinPersonasEnZonas       ; sin mapa.txt no hay nadie en zonas
+    JC FinPersonasEnZonas
     LEER_ARCHIVO 1872,BufferMapa,ID
     CERRAR_ARCHIVO ID
     MOV BP,0
@@ -341,25 +322,24 @@ FinPersonasEnZonas:
     RET
 PersonasEnZonas ENDP
 
-; Sale una persona (tecla - o boton 1)
 RegistrarSalida PROC
     MOV MensajeContador,0
     CMP PersonasEnSala,0
     JNE SalidaConPersonas
-    MOV MensajeContador,2       ; sala vacia
+    MOV MensajeContador,2
     RET
 SalidaConPersonas:
-    CALL PersonasEnZonas        ; la sala no puede quedar con menos gente que las zonas del Mapa
+    CALL PersonasEnZonas
     MOV AL,PersonasEnSala
     MOV AH,0
     CMP AX,ZonasContadas
-    JNC SalidaPermitida         ; sala > zonas: alguien esta sin ubicar
+    JNC SalidaPermitida
     JMP SalidaBloqueada
 SalidaPermitida:
     CMP AX,ZonasContadas
     JNE SalidaLibre
 SalidaBloqueada:
-    MOV MensajeContador,3       ; sala = zonas: todos estan ubicados en el Mapa
+    MOV MensajeContador,3
     RET
 SalidaLibre:
     SUB PersonasEnSala,1
@@ -372,8 +352,6 @@ SalidaGuardar:
     RET
 RegistrarSalida ENDP
 
-; Escribe en visitantes.txt: Evento ENTRA sala NNN entradas NNN salidas NNN pico NNN
-; (INICIO es el primer registro de la sesion, con el estado de arranque)
 RegistrarVisita PROC
     ESCRIBIR_ARCHIVO ID,7,TextoEvento
     CMP TipoDeEvento,'E'
@@ -408,8 +386,6 @@ VisitaEscribirSala:
     RET
 RegistrarVisita ENDP
 
-; Push Buttons (2080h): bit 0 = entra una persona, bit 1 = sale una persona
-; Se quitan los bits 7 a 2 restando su peso (sin AND); queda 0, 1, 2 o 3
 LeerBotones PROC
     MOV DX,2080h
     IN AL,DX
@@ -458,7 +434,6 @@ FinLeerBotones:
     RET
 LeerBotones ENDP
 
-; Pone en cero sala, entradas, salidas y pico
 ReiniciarContador PROC
     MOV PersonasEnSala,0
     MOV EntradasDelDia,0
@@ -468,13 +443,12 @@ ReiniciarContador PROC
     RET
 ReiniciarContador ENDP
 
-; Seven Segment (2030h-2037h): sala (3 digitos), espacio, entradas (3), espacio
 EscribirSieteSegmentos PROC
     MOV DX,2030h
     MOV AL,PersonasEnSala
     CALL ConvertirATexto
     CALL EscribirTresDigitos
-    MOV AL,0                    ; posicion apagada
+    MOV AL,0
     OUT DX,AL
     ADD DX,1
     MOV AL,EntradasDelDia
@@ -485,15 +459,14 @@ EscribirSieteSegmentos PROC
     RET
 EscribirSieteSegmentos ENDP
 
-; Escribe los 3 caracteres de TextoNumero en el Seven Segment (DX = puerto)
 EscribirTresDigitos PROC
     MOV SI,0
 SiguienteDigito:
     MOV AL,TextoNumero[SI]
-    SUB AL,'0'                  ; caracter '0'-'9' pasa a numero 0-9
+    SUB AL,'0'
     MOV BL,AL
     MOV BH,0
-    MOV AL,Segmentos[BX]        ; busca los segmentos del digito
+    MOV AL,Segmentos[BX]
     OUT DX,AL
     ADD DX,1
     ADD SI,1
@@ -502,24 +475,21 @@ SiguienteDigito:
     RET
 EscribirTresDigitos ENDP
 
-
 ;==================== CONVERSION ====================
 
-; Entrada: AL = numero de 0 a 255.  Salida: TextoNumero = 3 caracteres
-; Resta 100, luego 10, y lo que queda son las unidades
 ConvertirATexto PROC
     MOV TextoNumero,'0'
     MOV TextoNumero+1,'0'
     MOV TextoNumero+2,'0'
 RestarCien:
     CMP AL,100
-    JC RestarDiez               ; AL menor que 100
+    JC RestarDiez
     SUB AL,100
     ADD TextoNumero,1
     JMP RestarCien
 RestarDiez:
     CMP AL,10
-    JC SumarUnidades            ; AL menor que 10
+    JC SumarUnidades
     SUB AL,10
     ADD TextoNumero+1,1
     JMP RestarDiez

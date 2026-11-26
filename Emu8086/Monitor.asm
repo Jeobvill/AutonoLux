@@ -16,22 +16,20 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaDaniel        DB "C:\AutonoLux\Daniel",0
     RutaZonas         DB "C:\AutonoLux\Daniel\zonas.txt",0
     RutaBitacora      DB "C:\AutonoLux\Daniel\bitacora.txt",0
     RutaVisitantes    DB "C:\AutonoLux\Jesus\visitantes.txt",0
 
-; ---- Datos en vivo
-PersonasEnSala    DB 0          ; ultimo valor de sala escrito por el Contador
-Temperatura       DB 0          ; grados leidos del Thermometer
-AlertaRegistrada  DB 0          ; 1 = la alerta ya se mando a la bitacora
-TextoSala         DB "000"      ; sala tal como viene en visitantes.txt
-BufferVisita      DB 58 DUP(?)  ; un registro de visitantes.txt (58 bytes)
+PersonasEnSala    DB 0
+Temperatura       DB 0
+AlertaRegistrada  DB 0
+TextoSala         DB "000"
+BufferVisita      DB 58 DUP(?)
 
-; ---- Textos cortos que se escriben sobre la pantalla
-TextoNumero       DB "000"      ; resultado de ConvertirATexto
+TextoNumero       DB "000"
 TextoSemaforoVerde    DB "VERDE   "
 TextoSemaforoAmarillo DB "AMARILLO"
 TextoSemaforoRojo     DB "ROJO    "
@@ -39,16 +37,12 @@ TextoTermometroNormal DB "NORMAL "
 TextoTermometroAlerta DB "ALERTA "
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
-; ---- Registro de alerta para bitacora.txt (78 bytes: 76 caracteres + CR LF)
 TextoRegistroAlerta DB "| 00:00  -- Termometro          Alerta: temperatura alta        AUTO       |",13,10
 
-; ---- Buffer donde se lee bitacora.txt (solo para llegar al final del archivo)
 BufferBitacora    DB 1872 DUP(?)
 
-; ---- Buffer donde se lee zonas.txt (24 registros de 78 bytes)
 BufferMonitor     DB 1872 DUP(?)
 
-; ---- Texto base de zonas.txt: se escribe solo si el archivo no existe
 TextoMonitor      DB "+==========================================================================+",13,10
                   DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |",13,10
                   DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |",13,10
@@ -78,37 +72,36 @@ TextoMonitor      DB "+=========================================================
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaDaniel
     CALL ControlMonitor
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== MONITOR DE ZONAS ====================
 
-; Teclas: R refrescar, ESC volver
 ControlMonitor PROC
     ABRIR_ARCHIVO RutaZonas,0
     JC MonitorNoExiste
     JMP MonitorAbierto
 MonitorNoExiste:
-    CALL CrearMonitorInicial    ; el archivo no existe: se crea con la pantalla base
+    CALL CrearMonitorInicial
     ABRIR_ARCHIVO RutaZonas,0
     JC ErrorAlLeerMonitor
 MonitorAbierto:
     LEER_ARCHIVO 1872,BufferMonitor,ID
     JC ErrorAlLeerMonitor
     CERRAR_ARCHIVO ID
-    CALL EncenderTermometro     ; se enciende una sola vez, como en Termometro02
+    CALL EncenderTermometro
 MonitorRefrescar:
     CALL DibujarMonitor
     CALL LeerPersonasEnSala
     CALL PintarDatosEnVivo
 MonitorEsperarTecla:
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE MonitorSalir
     CMP AL,'R'
     JE MonitorRefrescar
@@ -122,7 +115,6 @@ ErrorAlLeerMonitor:
     RET
 ControlMonitor ENDP
 
-; Crea zonas.txt con la pantalla base (solo cuando todavia no existe)
 CrearMonitorInicial PROC
     CREAR_ARCHIVO RutaZonas,32
     MOV ID,AX
@@ -131,7 +123,6 @@ CrearMonitorInicial PROC
     RET
 CrearMonitorInicial ENDP
 
-; Dibuja la pantalla con los renglones leidos de zonas.txt (cada registro mide 78 bytes)
 DibujarMonitor PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR BufferMonitor,76,0,0,0,0,1Bh
@@ -161,7 +152,6 @@ DibujarMonitor PROC
     RET
 DibujarMonitor ENDP
 
-; Escribe sala, semaforo, temperatura y estado del termometro
 PintarDatosEnVivo PROC
     MOV AL,PersonasEnSala
     CALL ConvertirATexto
@@ -171,22 +161,19 @@ PintarDatosEnVivo PROC
     RET
 PintarDatosEnVivo ENDP
 
-
 ;==================== PERSONAS EN SALA (visitantes.txt) ====================
 
-; El Contador escribe un registro de 58 bytes por evento. Se leen todos y
-; se queda el ultimo; la sala son los 3 caracteres que empiezan en el byte 19
 LeerPersonasEnSala PROC
     MOV TextoSala,'0'
     MOV TextoSala+1,'0'
     MOV TextoSala+2,'0'
     ABRIR_ARCHIVO RutaVisitantes,0
-    JC FinLeerPersonas          ; todavia no se ha abierto el Contador: sala 0
+    JC FinLeerPersonas
 LeerSiguienteRegistroVisita:
     LEER_ARCHIVO 58,BufferVisita,ID
     JC TerminarLecturaVisitas
     CMP AX,58
-    JC TerminarLecturaVisitas   ; menos de 58 bytes: ya no hay mas registros
+    JC TerminarLecturaVisitas
     MOV AL,BufferVisita+19
     MOV TextoSala,AL
     MOV AL,BufferVisita+20
@@ -201,12 +188,10 @@ FinLeerPersonas:
     RET
 LeerPersonasEnSala ENDP
 
-; TextoSala ("017") pasa a numero en PersonasEnSala (decenas x 10 + unidades;
-; la sala nunca llega a 100 porque el aforo maximo es 60)
 ConvertirSalaANumero PROC
     MOV PersonasEnSala,0
     MOV CL,TextoSala+1
-    SUB CL,'0'                  ; CL = decenas
+    SUB CL,'0'
 SumarDecenasDeSala:
     CMP CL,0
     JE SumarUnidadesDeSala
@@ -220,39 +205,35 @@ SumarUnidadesDeSala:
     RET
 ConvertirSalaANumero ENDP
 
-
 ;==================== TRAFFIC_LIGHTS (puerto 4, palabra) ====================
 
-; Verde de 0 a 44 personas, amarillo de 45 a 59, rojo de 60 en adelante
 ActualizarSemaforo PROC
     MOV AL,PersonasEnSala
     CMP AL,45
-    JC SemaforoEnVerde          ; menos de 45
+    JC SemaforoEnVerde
     CMP AL,60
-    JC SemaforoEnAmarillo       ; de 45 a 59
+    JC SemaforoEnAmarillo
     MOV DX,4
-    MOV AX,0249h                ; los 4 semaforos en rojo
+    MOV AX,0249h
     OUT DX,AX
     IMPCAD_COLOR TextoSemaforoRojo,8,18,60,0,0,1Ch
     RET
 SemaforoEnAmarillo:
     MOV DX,4
-    MOV AX,0492h                ; los 4 semaforos en amarillo
+    MOV AX,0492h
     OUT DX,AX
     IMPCAD_COLOR TextoSemaforoAmarillo,8,18,60,0,0,1Eh
     RET
 SemaforoEnVerde:
     MOV DX,4
-    MOV AX,0924h                ; los 4 semaforos en verde
+    MOV AX,0924h
     OUT DX,AX
     IMPCAD_COLOR TextoSemaforoVerde,8,18,60,0,0,1Ah
     RET
 ActualizarSemaforo ENDP
 
-
 ;==================== THERMOMETER (puertos 127 y 125) ====================
 
-; Puerto 127: 1 enciende el termometro (confirmado en clase, Termometro02.asm)
 EncenderTermometro PROC
     MOV DX,127
     MOV AL,1
@@ -260,7 +241,6 @@ EncenderTermometro PROC
     RET
 EncenderTermometro ENDP
 
-; Puerto 125: temperatura (POR CONFIRMAR). Desde 35 grados hay alerta
 LeerTermometro PROC
     MOV DX,125
     IN AL,DX
@@ -269,37 +249,35 @@ LeerTermometro PROC
     IMPCAD_COLOR TextoNumero,3,19,24,0,0,1Fh
     MOV AL,Temperatura
     CMP AL,35
-    JC TemperaturaNormal        ; menos de 35
+    JC TemperaturaNormal
     IMPCAD_COLOR TextoTermometroAlerta,7,19,61,0,0,1Ch
     CMP AlertaRegistrada,1
-    JE FinLeerTermometro        ; la alerta ya se registro
+    JE FinLeerTermometro
     MOV AlertaRegistrada,1
     CALL RegistrarAlertaEnBitacora
     RET
 TemperaturaNormal:
     IMPCAD_COLOR TextoTermometroNormal,7,19,61,0,0,1Ah
-    MOV AlertaRegistrada,0      ; si vuelve a subir, avisa otra vez
+    MOV AlertaRegistrada,0
 FinLeerTermometro:
     RET
 LeerTermometro ENDP
 
-; Agrega el registro de alerta al final de bitacora.txt.
-; Al leer el archivo completo el puntero queda al final, y lo que se escribe despues se agrega
 RegistrarAlertaEnBitacora PROC
     ABRIR_ARCHIVO RutaBitacora,2
     JC AlertaCrearBitacora
     LEER_ARCHIVO 1872,BufferBitacora,ID
     JC FinRegistrarAlerta
     CMP AX,1872
-    JC AlertaEscribirRegistro   ; menos de 24 registros: hay lugar
-    CERRAR_ARCHIVO ID           ; bitacora llena
+    JC AlertaEscribirRegistro
+    CERRAR_ARCHIVO ID
     RET
 AlertaCrearBitacora:
     CREAR_ARCHIVO RutaBitacora,32
     MOV ID,AX
     JC FinRegistrarAlerta
 AlertaEscribirRegistro:
-    MOV DI,OFFSET TextoRegistroAlerta+2   ; hora real de la alerta
+    MOV DI,OFFSET TextoRegistroAlerta+2
     CALL HoraEnTexto
     ESCRIBIR_ARCHIVO ID,78,TextoRegistroAlerta
     CERRAR_ARCHIVO ID
@@ -307,13 +285,12 @@ FinRegistrarAlerta:
     RET
 RegistrarAlertaEnBitacora ENDP
 
-; Escribe la hora real de DOS (INT 21h/2Ch) como "HH:MM" en 5 bytes.  Entrada: DI = destino
 HoraEnTexto PROC
     MOV AH,2Ch
-    INT 21H                     ; CH = horas, CL = minutos
+    INT 21H
     PUSH CX
     MOV AL,CH
-    AAM                         ; AH = decenas, AL = unidades
+    AAM
     ADD AX,3030H
     MOV [DI],AH
     MOV [DI+1],AL
@@ -327,26 +304,21 @@ HoraEnTexto PROC
     RET
 HoraEnTexto ENDP
 
-
-
-
 ;==================== CONVERSION ====================
 
-; Entrada: AL = numero de 0 a 255.  Salida: TextoNumero = 3 caracteres
-; Resta 100, luego 10, y lo que queda son las unidades (sin ceros a la izquierda)
 ConvertirATexto PROC
     MOV TextoNumero,'0'
     MOV TextoNumero+1,'0'
     MOV TextoNumero+2,'0'
 RestarCien:
     CMP AL,100
-    JC RestarDiez               ; AL menor que 100
+    JC RestarDiez
     SUB AL,100
     ADD TextoNumero,1
     JMP RestarCien
 RestarDiez:
     CMP AL,10
-    JC SumarUnidades            ; AL menor que 10
+    JC SumarUnidades
     SUB AL,10
     ADD TextoNumero+1,1
     JMP RestarDiez
@@ -354,7 +326,7 @@ SumarUnidades:
     ADD TextoNumero+2,AL
     CMP TextoNumero,'0'
     JNE FinConvertir
-    MOV TextoNumero,' '         ; sin cero a la izquierda
+    MOV TextoNumero,' '
     CMP TextoNumero+1,'0'
     JNE FinConvertir
     MOV TextoNumero+1,' '

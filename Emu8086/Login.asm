@@ -13,59 +13,52 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaAxel          DB "C:\AutonoLux\Axel",0
     RutaUsuarios      DB "C:\AutonoLux\Axel\usuarios.txt",0
     RutaLoginSalida   DB "C:\AutonoLux\Axel\login_out.txt",0
 
-; ---- Estado del acceso
 IntentosRestantes DB 3
-MostrarError      DB 0          ; 1 = mostrar el aviso de clave incorrecta
-LoginCorrecto     DB 0          ; 1 = usuario y clave coinciden
-CodigoSalida      DB 1          ; 0 entro, 1 ESC, 3 bloqueado
-ErrorDeArchivo    DB 0          ; 1 = no se pudo crear usuarios.txt
-TextosIguales     DB 0          ; resultado de CompararTextos
+MostrarError      DB 0
+LoginCorrecto     DB 0
+CodigoSalida      DB 1
+ErrorDeArchivo    DB 0
+TextosIguales     DB 0
 LongitudUsuario   DB 0
 LongitudClave     DB 0
 
-; ---- Captura tecla por tecla (la clave se muestra con *)
-CapturaCantidad   DB 0          ; caracteres capturados
+CapturaCantidad   DB 0
 CapturaMaximo     DB 0
-CapturaEco        DB 0          ; caracter de eco (0 = el mismo que se teclea)
-CapturaMayusculas DB 0          ; 1 = convertir minusculas a mayusculas
+CapturaEco        DB 0
+CapturaMayusculas DB 0
 CapturaRenglon    DB 0
 CapturaColumna    DB 0
 CapturaCaracter   DB 0
-CapturaTecla      DB 0          ; tecla con la que termino: 13 ENTER, 27 ESC
+CapturaTecla      DB 0
 UsuarioCapturado  DB "     "
 ClaveCapturada    DB "    "
 
-; ---- usuarios.txt ("USUARIO,CLAVE") y su lectura
 UsuarioPorDefecto DB "ADMIN,1234"
 BufferUsuarios    DB 10 DUP(?)
 
-; ---- login_out.txt: OK,USUARIO / ESC / BLOQUEADO
 TextoResultadoAcceso   DB "OK,"
 TextoResultadoEscape   DB "ESC"
 TextoResultadoBloqueo  DB "BLOQUEADO"
 FinDeLinea        DB 13,10
 
-; ---- LCD (16 caracteres por linea, terminan en 0)
 LcdBienvenidoA    DB "Bienvenido "
 LcdNombreUsuario  DB "     ",0
 LcdTextoIntento   DB "Intento "
 LcdNumeroIntento  DB "2"
                   DB " de 3",0
 
-; ---- Textos cortos y mensajes (74 caracteres cada mensaje)
 TextoIntentos     DB "3"
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 MensajeError      DB "   Usuario o clave incorrectos. Verifique e intente de nuevo.             "
 MensajeBloqueo    DB "   Acceso bloqueado: 3 intentos fallidos. Presione una tecla para salir.  "
 MensajeBienvenida DB "   Acceso concedido. Presione una tecla para continuar.                   "
 
-; ---- Renglones comunes (banner AUTONOLUX) y propios de la pantalla
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -89,25 +82,23 @@ LoginRen20         DB "|                                                        
 LoginRen21         DB "|--------------------------------------------------------------------------|"
 LoginRen22         DB "|  Instituto Tecnologico de Tepic                Lenguajes de Interfaz 2026|"
 
-; ---- Datos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos_Datos.asm
 
 .CODE
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaAxel
     CALL ControlLogin
 Fin:
-    MOV AH,4Ch                  ; termina con el codigo de salida
+    MOV AH,4Ch
     MOV AL,CodigoSalida
     INT 21H
 
 ;==================== ACCESO AL SISTEMA ====================
 
-; Tres intentos. ENTER acepta cada campo, ESC sale
 ControlLogin PROC
     CALL CrearUsuariosBase
     CMP ErrorDeArchivo,1
@@ -117,7 +108,7 @@ LoginPantalla:
     CALL DibujarLogin
     CALL PintarEstadoLogin
     CALL PedirUsuario
-    CMP CapturaTecla,27         ; ESC
+    CMP CapturaTecla,27
     JE LoginEscape
     CALL PedirClave
     CMP CapturaTecla,27
@@ -128,7 +119,7 @@ LoginPantalla:
     CALL RegistrarIntentoFallido
     CMP IntentosRestantes,0
     JNE LoginPantalla
-    MOV CodigoSalida,3          ; tercer intento fallido
+    MOV CodigoSalida,3
     JMP LoginGuardarResultado
 LoginAcepta:
     MOV CodigoSalida,0
@@ -142,7 +133,6 @@ LoginSinArchivo:
     RET
 ControlLogin ENDP
 
-; Si usuarios.txt no existe lo crea con el usuario por defecto
 CrearUsuariosBase PROC
     MOV ErrorDeArchivo,0
     ABRIR_ARCHIVO RutaUsuarios,0
@@ -164,7 +154,6 @@ ErrorAlCrearUsuarios:
     RET
 CrearUsuariosBase ENDP
 
-; Dibuja la pantalla de acceso (renglones fijos)
 DibujarLogin PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR LineaMarco,76,0,0,0,0,1Bh
@@ -194,10 +183,9 @@ DibujarLogin PROC
     RET
 DibujarLogin ENDP
 
-; Escribe los intentos que quedan y, si hace falta, el aviso de error
 PintarEstadoLogin PROC
     MOV AL,IntentosRestantes
-    ADD AL,'0'                  ; numero pasa a caracter
+    ADD AL,'0'
     MOV TextoIntentos,AL
     IMPCAD_COLOR TextoIntentos,1,16,38,0,0,1Fh
     CMP MostrarError,1
@@ -209,7 +197,6 @@ PintarEstadoLogin ENDP
 
 ;==================== CAPTURA ====================
 
-; Usuario: 5 letras o numeros, se pasan a mayusculas
 PedirUsuario PROC
     LEA SI,UsuarioCapturado
     MOV CapturaMaximo,5
@@ -223,7 +210,6 @@ PedirUsuario PROC
     RET
 PedirUsuario ENDP
 
-; Clave: 4 caracteres, se muestran como *
 PedirClave PROC
     LEA SI,ClaveCapturada
     MOV CapturaMaximo,4
@@ -237,23 +223,22 @@ PedirClave PROC
     RET
 PedirClave ENDP
 
-; Captura tecla por tecla en [SI] hasta ENTER o ESC (RETROCESO borra)
 CapturarTexto PROC
     MOV CapturaCantidad,0
 CapturarSiguiente:
     CURSOR CapturaRenglon,CapturaColumna,0
     RASTREO
-    CMP AL,13                   ; ENTER
+    CMP AL,13
     JE CapturaTermina
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE CapturaTermina
-    CMP AL,8                    ; RETROCESO
+    CMP AL,8
     JE CapturaBorrar
     CMP AL,32
-    JC CapturarSiguiente        ; teclas de control: se ignoran
+    JC CapturarSiguiente
     MOV AH,CapturaCantidad
     CMP AH,CapturaMaximo
-    JE CapturarSiguiente        ; ya esta lleno
+    JE CapturarSiguiente
     CALL AceptarCaracter
     JMP CapturarSiguiente
 CapturaBorrar:
@@ -266,15 +251,14 @@ CapturaTermina:
     RET
 CapturarTexto ENDP
 
-; Guarda el caracter de AL en [SI] y lo pinta (o pinta el eco)
 AceptarCaracter PROC
     CMP CapturaMayusculas,1
     JNE AceptarGuardar
     CMP AL,'a'
-    JC AceptarGuardar           ; menor que 'a'
+    JC AceptarGuardar
     CMP AL,'{'
-    JNC AceptarGuardar          ; '{' o mayor
-    SUB AL,32                   ; minuscula pasa a mayuscula
+    JNC AceptarGuardar
+    SUB AL,32
 AceptarGuardar:
     MOV [SI],AL
     ADD SI,1
@@ -290,7 +274,6 @@ AceptarPintar:
     RET
 AceptarCaracter ENDP
 
-; Quita el ultimo caracter capturado y vuelve a pintar el guion bajo
 BorrarCaracter PROC
     SUB SI,1
     SUB CapturaCantidad,1
@@ -303,7 +286,6 @@ BorrarCaracter ENDP
 
 ;==================== VALIDACION ====================
 
-; Lee usuarios.txt ("ADMIN,1234") y compara usuario y clave capturados
 ValidarCredenciales PROC
     MOV LoginCorrecto,0
     CMP LongitudUsuario,5
@@ -322,7 +304,7 @@ ValidarCredenciales PROC
     JNE FinValidar
     LEA SI,ClaveCapturada
     LEA DI,BufferUsuarios
-    ADD DI,6                    ; la clave empieza despues de la coma
+    ADD DI,6
     MOV CX,4
     CALL CompararTextos
     CMP TextosIguales,1
@@ -332,7 +314,6 @@ FinValidar:
     RET
 ValidarCredenciales ENDP
 
-; Compara CX bytes de [SI] contra [DI]. Salida: TextosIguales = 1 si son iguales
 CompararTextos PROC
     MOV TextosIguales,1
 CompararSiguiente:
@@ -349,7 +330,6 @@ CompararLetraIgual:
     RET
 CompararTextos ENDP
 
-; Resta un intento. Con 0 intentos muestra el bloqueo, si no el intento siguiente
 RegistrarIntentoFallido PROC
     SUB IntentosRestantes,1
     MOV MostrarError,1
@@ -364,7 +344,6 @@ QuedanIntentos:
     RET
 RegistrarIntentoFallido ENDP
 
-; Acceso concedido: LCD con el nombre y mensaje en pantalla
 MostrarBienvenida PROC
     CALL CopiarUsuarioAlLcd
     CALL MostrarLcdBienvenida
@@ -373,7 +352,6 @@ MostrarBienvenida PROC
     RET
 MostrarBienvenida ENDP
 
-; Escribe en login_out.txt el resultado: OK,USUARIO / ESC / BLOQUEADO
 EscribirResultadoLogin PROC
     CREAR_ARCHIVO RutaLoginSalida,32
     MOV ID,AX
@@ -403,16 +381,14 @@ EscribirResultadoLogin ENDP
 
 ;==================== LCD (mensajes al operador) ====================
 
-; LCD al arrancar: AUTONOLUX
 MostrarLcdInicio PROC
     CALL LimpiarLcd
-    MOV DX,2040h                ; linea 1
+    MOV DX,2040h
     LEA SI,LcdTitulo
     CALL EscribirLcd
     RET
 MostrarLcdInicio ENDP
 
-; LCD: Bienvenido USUARIO
 MostrarLcdBienvenida PROC
     CALL LimpiarLcd
     MOV DX,2040h
@@ -421,10 +397,9 @@ MostrarLcdBienvenida PROC
     RET
 MostrarLcdBienvenida ENDP
 
-; LCD: Intento N de 3  (N = numero del intento que sigue: 2 o 3)
 MostrarLcdIntento PROC
     MOV AL,4
-    SUB AL,IntentosRestantes    ; quedan 2 -> intento 2, queda 1 -> intento 3
+    SUB AL,IntentosRestantes
     ADD AL,'0'
     MOV LcdNumeroIntento,AL
     CALL LimpiarLcd
@@ -434,7 +409,6 @@ MostrarLcdIntento PROC
     RET
 MostrarLcdIntento ENDP
 
-; LCD: Acceso bloqueado
 MostrarLcdBloqueo PROC
     CALL LimpiarLcd
     MOV DX,2040h
@@ -443,7 +417,6 @@ MostrarLcdBloqueo PROC
     RET
 MostrarLcdBloqueo ENDP
 
-; Copia las 5 letras del usuario al texto de bienvenida del LCD
 CopiarUsuarioAlLcd PROC
     MOV SI,0
 CopiarLetraUsuario:
@@ -455,7 +428,6 @@ CopiarLetraUsuario:
     RET
 CopiarUsuarioAlLcd ENDP
 
-; Procedimientos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos.asm
 
 END Inicio

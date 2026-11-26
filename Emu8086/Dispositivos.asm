@@ -11,7 +11,6 @@
 
 ;==================== LCD ASCII (2040h-206Fh) ====================
 
-; Llena las 48 posiciones del LCD con espacios
 LimpiarLcd PROC
     MOV DX,2040h
     MOV CX,48
@@ -25,8 +24,6 @@ LcdLimpiarSiguiente:
     RET
 LimpiarLcd ENDP
 
-; Escribe un texto terminado en 0 a partir de un puerto
-; Entrada: SI = texto, DX = puerto de inicio (2040h linea 1, 2050h linea 2)
 EscribirLcd PROC
 LcdSiguienteLetra:
     MOV AL,[SI]
@@ -42,8 +39,6 @@ EscribirLcd ENDP
 
 ;==================== LED_Display ====================
 
-; Muestra un numero de 0 a 9999 en los 4 digitos (por ejemplo, la potencia en watts)
-; Entrada: AX = numero
 MostrarEnLedDisplay PROC
     MOV DigitosLed,0
     MOV DigitosLed+1,0
@@ -51,7 +46,7 @@ MostrarEnLedDisplay PROC
     MOV DigitosLed+3,0
 LedMillares:
     CMP AX,1000
-    JC LedCentenas              ; AX menor que 1000
+    JC LedCentenas
     SUB AX,1000
     ADD DigitosLed,1
     JMP LedMillares
@@ -72,9 +67,9 @@ LedUnidades:
     MOV DX,PuertoLedDisplay
     MOV SI,0
 LedSiguienteDigito:
-    MOV BL,DigitosLed[SI]       ; numero del digito (0 a 9)
+    MOV BL,DigitosLed[SI]
     MOV BH,0
-    MOV AL,SegmentosLed[BX]     ; segmentos que lo dibujan
+    MOV AL,SegmentosLed[BX]
     OUT DX,AL
     ADD DX,1
     ADD SI,1
@@ -85,19 +80,17 @@ MostrarEnLedDisplay ENDP
 
 ;==================== Stepper_motor (puerto 7) ====================
 
-; Gira el motor de las persianas
-; Entrada: CX = numero de pasos, DireccionMotor = 0 abre / 1 cierra
 GirarPersianas PROC
 MotorSiguientePaso:
     CMP DireccionMotor,0
     JNE MotorHaciaAtras
-    ADD PosicionPaso,1          ; abrir: siguiente paso de la secuencia
+    ADD PosicionPaso,1
     CMP PosicionPaso,4
     JNE MotorEscribirPaso
     MOV PosicionPaso,0
     JMP MotorEscribirPaso
 MotorHaciaAtras:
-    CMP PosicionPaso,0          ; cerrar: paso anterior de la secuencia
+    CMP PosicionPaso,0
     JNE MotorRestarPaso
     MOV PosicionPaso,4
 MotorRestarPaso:
@@ -115,7 +108,6 @@ MotorEscribirPaso:
     RET
 GirarPersianas ENDP
 
-; Espera entre un paso y otro (usa SI para no perder CX)
 EsperarMotor PROC
     MOV SI,RetardoMotor
 MotorEsperarVuelta:

@@ -17,13 +17,10 @@ INCLUDE Biblioteca.txt
     RutaAxel          DB "C:\AutonoLux\Axel",0
     RutaAcerca        DB "C:\AutonoLux\Axel\acerca.txt",0
 
-; ---- Textos cortos
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
-; ---- Buffer donde se lee acerca.txt (24 registros de 78 bytes)
 BufferAcerca      DB 1872 DUP(?)
 
-; ---- Texto base de acerca.txt: se escribe solo si el archivo no existe
 TextoAcerca       DB "+==========================================================================+",13,10
                   DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |",13,10
                   DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |",13,10
@@ -53,23 +50,22 @@ TextoAcerca       DB "+=========================================================
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaAxel
     CALL MostrarAcerca
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== ACERCA DE ====================
 
-; Tecla: ESC volver
 MostrarAcerca PROC
     ABRIR_ARCHIVO RutaAcerca,0
     JC AcercaNoExiste
     JMP AcercaAbierto
 AcercaNoExiste:
-    CALL CrearAcercaInicial     ; el archivo no existe: se crea con la pantalla base
+    CALL CrearAcercaInicial
     ABRIR_ARCHIVO RutaAcerca,0
     JC ErrorAlLeerAcerca
 AcercaAbierto:
@@ -79,7 +75,7 @@ AcercaAbierto:
     CALL DibujarAcerca
 AcercaEsperarTecla:
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JNE AcercaEsperarTecla
     RET
 ErrorAlLeerAcerca:
@@ -89,7 +85,6 @@ ErrorAlLeerAcerca:
     RET
 MostrarAcerca ENDP
 
-; Crea acerca.txt con la pantalla base (solo cuando todavia no existe)
 CrearAcercaInicial PROC
     CREAR_ARCHIVO RutaAcerca,32
     MOV ID,AX
@@ -100,7 +95,6 @@ FinCrearAcerca:
     RET
 CrearAcercaInicial ENDP
 
-; Dibuja la pantalla con los renglones leidos de acerca.txt (cada registro mide 78 bytes)
 DibujarAcerca PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR BufferAcerca,76,0,0,0,0,1Bh

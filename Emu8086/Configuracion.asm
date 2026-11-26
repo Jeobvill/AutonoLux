@@ -12,26 +12,22 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaSergio        DB "C:\AutonoLux\Sergio",0
     RutaConfiguracion DB "C:\AutonoLux\Sergio\config.txt",0
 
-; ---- Captura de un valor nuevo
-CadenaCapturada   DB 15,0,17 DUP(0)     ; buffer de DOS: maximo, longitud y texto
+CadenaCapturada   DB 15,0,17 DUP(0)
 LongitudCapturada DW ?
 
-; ---- Registro de config.txt: "Opcion N: valor" + CR LF
 RegistroOpcion    DB "Opcion "
 NumeroOpcion      DB "?"
                   DB ": "
 FinDeLinea        DB 13,10
 
-; ---- Textos cortos que se escriben sobre la pantalla
 TextoNuevoValor   DB "Nuevo valor: "
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
-; ---- Renglones comunes (banner AUTONOLUX)
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -39,7 +35,6 @@ Logo3             DB "|              / _ \| | | | | || | | |  \| | | | | |  | | 
 Logo4             DB "|             / ___ \ |_| | | || |_| | |\  | |_| | |__| |_| |/  \          |"
 Logo5             DB "|            /_/   \_\___/  |_| \___/|_| \_|\___/|_____\___//_/\_\         |"
 
-; ---- Renglones propios de la pantalla
 ConfiguracionRen07  DB "| CONFIGURACION DEL SISTEMA                                                |"
 ConfiguracionRen08  DB "|--------------------------------------------------------------------------|"
 ConfiguracionRen09  DB "                                                                            "
@@ -57,24 +52,22 @@ ConfiguracionRen20  DB "                                                        
 ConfiguracionRen21  DB "|   * Los cambios se aplican al guardar.                                   |"
 ConfiguracionRen22  DB "                                                                            "
 
-; ---- Datos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos_Datos.asm
 
 .CODE
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaSergio
     CALL ControlConfiguracion
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== CONFIGURACION DEL SISTEMA ====================
 
-; Teclas: 1-6 capturar una opcion, G guardar y salir, ESC cancelar
 ControlConfiguracion PROC
     CREAR_ARCHIVO RutaConfiguracion,32
     MOV ID,AX
@@ -89,15 +82,15 @@ ConfiguracionRedibujar:
     CALL DibujarConfiguracion
     CURSOR 19,67,0
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE ConfiguracionSalir
     CMP AL,'G'
     JE ConfiguracionSalir
     CMP AL,'1'
-    JC ConfiguracionRedibujar   ; menor que '1'
+    JC ConfiguracionRedibujar
     CMP AL,'7'
-    JC ConfiguracionCapturar    ; '1' a '6'
-    JMP ConfiguracionRedibujar  ; '7' o mayor
+    JC ConfiguracionCapturar
+    JMP ConfiguracionRedibujar
 ConfiguracionCapturar:
     CALL CapturarValor
     JMP ConfiguracionRedibujar
@@ -106,20 +99,18 @@ ConfiguracionSalir:
     RET
 ControlConfiguracion ENDP
 
-; Pide un valor nuevo y lo escribe como renglon "Opcion N: valor"
-; Entrada: AL = tecla de la opcion elegida
 CapturarValor PROC
     MOV NumeroOpcion,AL
     IMPCAD_COLOR TextoNuevoValor,13,22,3,0,0,1Eh
     CURSOR 22,16,0
     LECTURA_CADENA CadenaCapturada
-    MOV AL,CadenaCapturada+1    ; cuantos caracteres se escribieron
+    MOV AL,CadenaCapturada+1
     MOV AH,0
     MOV LongitudCapturada,AX
     ESCRIBIR_ARCHIVO ID,10,RegistroOpcion
     ESCRIBIR_ARCHIVO ID,LongitudCapturada,CadenaCapturada+2
     ESCRIBIR_ARCHIVO ID,2,FinDeLinea
-    CMP NumeroOpcion,'2'        ; aforo maximo: se muestra en el LED_Display
+    CMP NumeroOpcion,'2'
     JNE FinCapturarValor
     XOR AX,AX
     MOV SI,0
@@ -140,7 +131,6 @@ FinCapturarValor:
     RET
 CapturarValor ENDP
 
-; Dibuja la pantalla de configuracion
 DibujarConfiguracion PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR LineaMarco,76,0,0,0,0,1Bh
@@ -170,7 +160,6 @@ DibujarConfiguracion PROC
     RET
 DibujarConfiguracion ENDP
 
-; Procedimientos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos.asm
 
 END Inicio

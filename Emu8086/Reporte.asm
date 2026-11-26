@@ -13,17 +13,15 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaAxel          DB "C:\AutonoLux\Axel",0
     RutaReporte       DB "C:\AutonoLux\Axel\reporte.txt",0
 
-; ---- Notas del operador (maximo 3). Inician vacias
 NotasCapturadas   DB 0
 LongitudTrabajo   DW 0
 FinDeLinea        DB 13,10
 
-; ---- Cada nota es un buffer de DOS: maximo, longitud y texto
 Nota1             DB 61
 Nota1Longitud     DB 0
 Nota1Texto        DB 62 DUP(0)
@@ -34,13 +32,11 @@ Nota3             DB 61
 Nota3Longitud     DB 0
 Nota3Texto        DB 62 DUP(0)
 
-; ---- Textos cortos y mensajes (74 caracteres cada mensaje)
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 MensajeGuardado   DB "   Reporte guardado en reporte.txt. Presione una tecla para continuar.    "
 MensajeImpreso    DB "   Reporte enviado a la impresora. Presione una tecla para continuar.     "
 MensajeNotasLlenas DB "   Maximo 3 notas por reporte. Presione una tecla para continuar.         "
 
-; ---- Texto del reporte (318 bytes, con los campos de datos reales): se guarda en reporte.txt y se imprime
 TextoReporte     DB "AUTONOLUX - REPORTE DEL DIA",13,10
                   DB "Fecha: "
 TFecha            DB "00/00/0000"
@@ -78,7 +74,6 @@ TAhorro           DB "000"
                   DB " %",13,10
                   DB "NOTAS:",13,10
 
-; ---- Renglones comunes (banner AUTONOLUX) y propios de la pantalla
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -134,22 +129,21 @@ ReporteRen20       DB "|   2.                                                   
 ReporteRen21       DB "|   3.                                                                     |"
 ReporteRen22       DB "|  [N] Nota   [G] Guardar   [I] Imprimir   [ESC] Volver                    |"
 
-; ---- Datos reales que alimentan el reporte (se leen de los archivos de los demas programas)
 RutaMapa          DB "C:\AutonoLux\Jesus\mapa.txt",0
 RutaIluminacion   DB "C:\AutonoLux\Jesus\iluminacion.txt",0
 RutaVisitantes    DB "C:\AutonoLux\Jesus\visitantes.txt",0
 RutaConfiguracion DB "C:\AutonoLux\Sergio\config.txt",0
 BufferMapa        DB 1872 DUP(0)
 BufferIlum        DB 180 DUP(0)
-RegistroVis       DB 58 DUP(0)      ; ultimo registro de visitantes.txt (58 bytes)
+RegistroVis       DB 58 DUP(0)
 BufferConfig      DB 256 DUP(0)
 TextoNumero       DB "000"
 VisSala           DW 0
 VisEntradas       DW 0
 VisSalidas        DW 0
 VisPico           DW 0
-AforoMaximo       DW 60              ; opcion 2 de config.txt
-WattsLampara      DW 18              ; opcion 3 de config.txt
+AforoMaximo       DW 60
+WattsLampara      DW 18
 LamparasPorZona   DW 4
 ZonasOcupadas     DW 0
 PersonasZonas     DW 0
@@ -159,29 +153,27 @@ LamparasOn        DW 0
 PotenciaOn        DW 0
 PotenciaSinAuto   DW 0
 AhorroPorcentaje  DW 0
-OffsetsPersonas   DW 872,896,920,1262,1286,1310   ; columna de personas de cada zona en mapa.txt
+OffsetsPersonas   DW 872,896,920,1262,1286,1310
 PorcentajeZonas   DB 0,17,33,50,67,83,100
 
-; ---- Datos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos_Datos.asm
 
 .CODE
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaAxel
-    CALL LeerDatosReporte       ; numeros reales de los demas programas
+    CALL LeerDatosReporte
     CALL ArmarReporte
     CALL ControlReporte
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== REPORTE DEL DIA ====================
 
-; Teclas: N nota, G guardar, I imprimir, ESC volver
 ControlReporte PROC
     MOV NotasCapturadas,0
 ReporteRedibujar:
@@ -189,7 +181,7 @@ ReporteRedibujar:
     CALL PintarNotas
     CURSOR 22,60,0
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JE ReporteSalir
     CMP AL,'N'
     JE ReporteNota
@@ -211,7 +203,6 @@ ReporteSalir:
     RET
 ControlReporte ENDP
 
-; Dibuja la pantalla del reporte (renglones fijos)
 DibujarReporte PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR LineaMarco,76,0,0,0,0,1Bh
@@ -243,7 +234,6 @@ DibujarReporte ENDP
 
 ;==================== NOTAS ====================
 
-; Captura la nota que sigue (renglones 19, 20 y 21). Maximo 3
 CapturarNota PROC
     MOV AL,NotasCapturadas
     CMP AL,3
@@ -271,7 +261,6 @@ NotasLlenas:
     RET
 CapturarNota ENDP
 
-; Dibuja las notas ya capturadas sobre la pantalla
 PintarNotas PROC
     CMP NotasCapturadas,0
     JE FinPintarNotas
@@ -286,8 +275,6 @@ FinPintarNotas:
     RET
 PintarNotas ENDP
 
-
-; Escribe las notas capturadas en reporte.txt
 EscribirNotas PROC
     CMP NotasCapturadas,0
     JE FinEscribirNotas
@@ -302,8 +289,6 @@ FinEscribirNotas:
     RET
 EscribirNotas ENDP
 
-
-; Manda las notas capturadas a la impresora
 ImprimirNotas PROC
     CMP NotasCapturadas,0
     JE FinImprimirNotas
@@ -318,8 +303,6 @@ FinImprimirNotas:
     RET
 ImprimirNotas ENDP
 
-
-; Nota 1: renglon 19
 PintarNota1 PROC
     MOV AL,Nota1Longitud
     MOV AH,0
@@ -348,7 +331,6 @@ ImprimirNota1 PROC
     RET
 ImprimirNota1 ENDP
 
-; Nota 2: renglon 20
 PintarNota2 PROC
     MOV AL,Nota2Longitud
     MOV AH,0
@@ -377,7 +359,6 @@ ImprimirNota2 PROC
     RET
 ImprimirNota2 ENDP
 
-; Nota 3: renglon 21
 PintarNota3 PROC
     MOV AL,Nota3Longitud
     MOV AH,0
@@ -406,10 +387,8 @@ ImprimirNota3 PROC
     RET
 ImprimirNota3 ENDP
 
-
 ;==================== GUARDAR E IMPRIMIR ====================
 
-; Escribe reporte.txt: resumen + notas, y avisa en el LCD
 GuardarReporte PROC
     CREAR_ARCHIVO RutaReporte,32
     MOV ID,AX
@@ -428,7 +407,6 @@ ErrorAlGuardarReporte:
     RET
 GuardarReporte ENDP
 
-; Imprime resumen + notas y hace salto de pagina
 ImprimirReporte PROC
     LEA SI,TextoReporte
     MOV CX,318
@@ -440,7 +418,6 @@ ImprimirReporte PROC
     RET
 ImprimirReporte ENDP
 
-; Manda a la impresora CX caracteres desde [SI]
 EnviarAImpresora PROC
     CMP CX,0
     JE FinEnviarAImpresora
@@ -456,10 +433,9 @@ EnviarAImpresora ENDP
 
 ;==================== LCD ====================
 
-; LCD: Reporte guardado
 MostrarLcdGuardado PROC
     CALL LimpiarLcd
-    MOV DX,2040h                ; linea 1
+    MOV DX,2040h
     LEA SI,LcdGuardado
     CALL EscribirLcd
     RET
@@ -467,7 +443,6 @@ MostrarLcdGuardado ENDP
 
 ;==================== DATOS REALES DEL REPORTE ====================
 
-; Convierte los CX caracteres que empiezan en [DI] en un numero (AX); ignora espacios
 ParseDigitos PROC
     XOR AX,AX
 ParseSiguiente:
@@ -475,9 +450,9 @@ ParseSiguiente:
     JE FinParse
     MOV BL,[DI]
     CMP BL,'0'
-    JC ParseSalta               ; menor que '0'
+    JC ParseSalta
     CMP BL,':'
-    JNC ParseSalta              ; mayor que '9'
+    JNC ParseSalta
     MOV DX,10
     MUL DX
     SUB BL,'0'
@@ -491,7 +466,6 @@ FinParse:
     RET
 ParseDigitos ENDP
 
-; Busca "Opcion N: " en BufferConfig.  Entrada: AL = digito.  Salida: SI = valor, CF=1 si no esta
 BuscarOpcion PROC
     MOV SI,0
 BuscarSiguiente:
@@ -512,7 +486,6 @@ OpcionNoEsta:
     RET
 BuscarOpcion ENDP
 
-; Numero que empieza en BufferConfig[SI]
 LeerNumeroConfig PROC
     XOR AX,AX
 NumeroSiguiente:
@@ -532,9 +505,7 @@ FinNumeroConfig:
     RET
 LeerNumeroConfig ENDP
 
-; Lee los archivos reales y llena las variables del reporte
 LeerDatosReporte PROC
-    ; ---- config.txt: aforo (opcion 2) y watts por lampara (opcion 3)
     ABRIR_ARCHIVO RutaConfiguracion,0
     JC LeerVisitantes
     LEER_ARCHIVO 255,BufferConfig,ID
@@ -555,7 +526,6 @@ ConfigWatts:
     JE LeerVisitantes
     MOV WattsLampara,AX
 LeerVisitantes:
-    ; ---- visitantes.txt: se leen todos los registros de 58 bytes y queda el ultimo
     ABRIR_ARCHIVO RutaVisitantes,0
     JC LeerMapaReal
 VisitantesOtro:
@@ -566,31 +536,30 @@ VisitantesOtro:
 VisitantesFin:
     CERRAR_ARCHIVO ID
     MOV CX,3
-    LEA DI,RegistroVis+19       ; sala
+    LEA DI,RegistroVis+19
     CALL ParseDigitos
     MOV VisSala,AX
     MOV CX,3
-    LEA DI,RegistroVis+32       ; entradas
+    LEA DI,RegistroVis+32
     CALL ParseDigitos
     MOV VisEntradas,AX
     MOV CX,3
-    LEA DI,RegistroVis+44       ; salidas
+    LEA DI,RegistroVis+44
     CALL ParseDigitos
     MOV VisSalidas,AX
     MOV CX,3
-    LEA DI,RegistroVis+53       ; pico
+    LEA DI,RegistroVis+53
     CALL ParseDigitos
     MOV VisPico,AX
 LeerMapaReal:
-    ; ---- mapa.txt: personas por zona
     ABRIR_ARCHIVO RutaMapa,0
     JC LeerIlumReal
     LEER_ARCHIVO 1872,BufferMapa,ID
     CERRAR_ARCHIVO ID
-    MOV BP,0                    ; zona 0 a 5
+    MOV BP,0
 MapaSiguienteZona:
     MOV BX,BP
-    ADD BX,BX                   ; WORD: dos bytes por posicion
+    ADD BX,BX
     MOV SI,OffsetsPersonas[BX]
     LEA DI,BufferMapa
     ADD DI,SI
@@ -605,7 +574,6 @@ MapaZonaVacia:
     CMP BP,6
     JNE MapaSiguienteZona
 LeerIlumReal:
-    ; ---- iluminacion.txt: zonas con luz y en modo manual (registros de 30 bytes)
     ABRIR_ARCHIVO RutaIluminacion,0
     JC CalcularEnergia
     LEER_ARCHIVO 180,BufferIlum,ID
@@ -624,7 +592,6 @@ IlumAvanza:
     CMP SI,180
     JC IlumSiguiente
 CalcularEnergia:
-    ; ---- MUL: lamparas encendidas y potencia (watts)
     MOV AX,ZonasConLuz
     MOV BX,LamparasPorZona
     MUL BX
@@ -638,7 +605,6 @@ CalcularEnergia:
     MOV BX,WattsLampara
     MUL BX
     MOV PotenciaSinAuto,AX
-    ; ---- SUB: ahorro = 100 - porcentaje de zonas encendidas
     MOV BX,ZonasConLuz
     MOV AL,100
     SUB AL,PorcentajeZonas[BX]
@@ -647,7 +613,6 @@ CalcularEnergia:
     RET
 LeerDatosReporte ENDP
 
-; Escribe en AX (0 a 999) 3 caracteres en [DI], sin ceros a la izquierda
 PonerNum3 PROC
     PUSH AX
     PUSH DI
@@ -686,14 +651,12 @@ Num3Copiar:
     RET
 PonerNum3 ENDP
 
-; Escribe AL (0 a 9) como un caracter en [DI]
 PonerNum1 PROC
     ADD AL,'0'
     MOV [DI],AL
     RET
 PonerNum1 ENDP
 
-; Escribe AL (0 a 99) como 2 digitos en [DI]
 PonerNum2 PROC
     MOV AH,0
     AAM
@@ -703,12 +666,11 @@ PonerNum2 PROC
     RET
 PonerNum2 ENDP
 
-; Fecha y hora reales de DOS en "dd/mm/yyyy" (10 bytes) y "hh:mm" (5 bytes). DI = fecha, SI = hora
 PonerFechaHora PROC
     PUSH SI
     PUSH DI
     MOV AH,2Ah
-    INT 21H                     ; CX = anio, DH = mes, DL = dia
+    INT 21H
     POP DI
     PUSH CX
     PUSH DX
@@ -729,8 +691,8 @@ PonerFechaHora PROC
     ADD DI,2
     CALL PonerNum2
     MOV AH,2Ch
-    INT 21H                     ; CH = hora, CL = minutos
-    POP DI                      ; DI = hora (SI de entrada)
+    INT 21H
+    POP DI
     PUSH CX
     MOV AL,CH
     CALL PonerNum2
@@ -742,7 +704,6 @@ PonerFechaHora PROC
     RET
 PonerFechaHora ENDP
 
-; Copia los numeros calculados a la pantalla (ReporteRen..) y al texto de reporte.txt
 ArmarReporte PROC
     LEA DI,RFecha
     LEA SI,RHora
@@ -822,7 +783,6 @@ ArmarReporte PROC
     RET
 ArmarReporte ENDP
 
-; Procedimientos de los devices (LED_Display, Stepper_motor y LCD)
 INCLUDE Dispositivos.asm
 
 END Inicio

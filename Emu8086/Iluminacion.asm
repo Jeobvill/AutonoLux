@@ -12,23 +12,21 @@ INCLUDE Biblioteca.txt
 .STACK 100H
 
 .DATA
-    ID                DW ?          ; handle de archivo (lo usa la biblioteca)
+    ID                DW ?
     RutaRaiz          DB "C:\AutonoLux",0
     RutaJesus         DB "C:\AutonoLux\Jesus",0
     RutaIluminacion   DB "C:\AutonoLux\Jesus\iluminacion.txt",0
 
-; ---- Zonas (posicion 0 = zona 1 ... posicion 5 = zona 6). Inician vacias
-OcupacionPorZona  DB 0,0,0,0,0,0          ; personas por zona (modo automatico)
-LuzPorZona        DB 0,0,0,0,0,0          ; 1 = encendida
+OcupacionPorZona  DB 0,0,0,0,0,0
+LuzPorZona        DB 0,0,0,0,0,0
 IntensidadPorZona DB 100,100,100,100,100,100
-ModoGlobal        DB 'A'                  ; 'A' automatico, 'M' manual
-ZonaSeleccionada  DB 9                    ; 0 a 5, 9 = ninguna
+ModoGlobal        DB 'A'
+ZonaSeleccionada  DB 9
 ZonaActual        DB 0
 RenglonActual     DB 0
-PesoDeZona        DB 1,2,4,8,16,32        ; bit de cada zona en los LEDs
+PesoDeZona        DB 1,2,4,8,16,32
 
-; ---- Textos cortos que se escriben sobre la pantalla
-TextoNumero       DB "000"      ; resultado de ConvertirATexto
+TextoNumero       DB "000"
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 TextoZona         DB "1"
 TextoFlecha       DB ">"
@@ -39,7 +37,6 @@ TextoMan          DB "MAN "
 TextoModoAutomatico DB "AUTOMATICO"
 TextoModoManual   DB "MANUAL    "
 
-; ---- Registro de iluminacion.txt (30 bytes por cambio)
 RegistroIluminacion DB "Zona "
 RegistroZona      DB "1"
                   DB " modo "
@@ -50,7 +47,6 @@ RegistroLuz       DB "1"
 RegistroIntensidad DB "100"
                   DB "%",13,10
 
-; ---- Renglones comunes (banner AUTONOLUX) y propios de la pantalla
 LineaMarco        DB "+==========================================================================+"
 Logo1             DB "|             _   _   _ _____ ___  _   _  ___  _    _   ___  __            |"
 Logo2             DB "|               / \ | | | |_   _/ _ \| \ | |/ _ \| |  | | | \ \/ /         |"
@@ -78,17 +74,16 @@ IluminacionRen22  DB "| Cada cambio se guarda en iluminacion.txt      LEDs: luz 
 Inicio:
     MOV AX,@DATA
     MOV DS,AX
-    MOV ES,AX                   ; ES = DS, necesario para IMPCAD_COLOR
-    CREAR_CARPETA RutaRaiz      ; si ya existe, DOS da error y se ignora
+    MOV ES,AX
+    CREAR_CARPETA RutaRaiz
     CREAR_CARPETA RutaJesus
     CALL ControlIluminacion
 Fin:
-    MOV AX,4C00H                ; termina con codigo 0
+    MOV AX,4C00H
     INT 21H
 
 ;==================== CONTROL MANUAL DE ILUMINACION ====================
 
-; Teclas: A automatico, M manual, 1-6 zona, + y - intensidad, T luz, ESC volver
 ControlIluminacion PROC
     CREAR_ARCHIVO RutaIluminacion,32
     MOV ID,AX
@@ -108,7 +103,7 @@ IluminacionPintar:
     CALL PintarFilasIluminacion
     CALL EscribirLeds
     RASTREO
-    CMP AL,27                   ; ESC
+    CMP AL,27
     JNE IluminacionOtraTecla
     CERRAR_ARCHIVO ID
     RET
@@ -119,7 +114,7 @@ IluminacionOtraTecla:
     JE IluminacionModoManual
     CMP AL,'+'
     JE IluminacionSubir
-    CMP AL,'='                  ; '+' sin Shift
+    CMP AL,'='
     JE IluminacionSubir
     CMP AL,'-'
     JE IluminacionBajar
@@ -151,7 +146,6 @@ IluminacionAlternar:
     JMP IluminacionRedibujar
 ControlIluminacion ENDP
 
-; Dibuja la pantalla de iluminacion (renglones fijos)
 DibujarIluminacion PROC
     SCROLL_ARRIBA 0,0,0,24,79,1Fh
     IMPCAD_COLOR LineaMarco,76,0,0,0,0,1Bh
@@ -181,7 +175,6 @@ DibujarIluminacion PROC
     RET
 DibujarIluminacion ENDP
 
-; Escribe modo global, las 6 filas de zonas y la zona elegida
 PintarFilasIluminacion PROC
     CMP ModoGlobal,'A'
     JNE PintarModoManual
@@ -207,7 +200,6 @@ PintarZonaElegida:
     RET
 PintarFilasIluminacion ENDP
 
-; Fila de la zona ZonaActual: modo, luz, intensidad y flecha (renglones 10 a 15)
 PintarFilaDeZona PROC
     MOV AL,ZonaActual
     ADD AL,10
@@ -241,7 +233,6 @@ FilaSinFlecha:
     RET
 PintarFilaDeZona ENDP
 
-; Sube 10 la intensidad de la zona elegida (maximo 100)
 SubirIntensidad PROC
     CMP ZonaSeleccionada,9
     JE FinSubirIntensidad
@@ -255,7 +246,6 @@ FinSubirIntensidad:
     RET
 SubirIntensidad ENDP
 
-; Baja 10 la intensidad de la zona elegida (minimo 10)
 BajarIntensidad PROC
     CMP ZonaSeleccionada,9
     JE FinBajarIntensidad
@@ -269,7 +259,6 @@ FinBajarIntensidad:
     RET
 BajarIntensidad ENDP
 
-; Enciende o apaga la luz de la zona elegida, solo en modo manual
 AlternarLuz PROC
     CMP ModoGlobal,'M'
     JNE FinAlternarLuz
@@ -289,7 +278,6 @@ FinAlternarLuz:
     RET
 AlternarLuz ENDP
 
-; Escribe en iluminacion.txt: Zona N modo X luz L int III%
 RegistrarCambioIluminacion PROC
     MOV AL,ZonaSeleccionada
     ADD AL,'1'
@@ -313,10 +301,8 @@ RegistrarCambioIluminacion PROC
     RET
 RegistrarCambioIluminacion ENDP
 
-
 ;==================== LEDS Y CONVERSION ====================
 
-; Modo automatico: la luz de cada zona sigue a la presencia
 AplicarModoAutomatico PROC
     MOV BX,0
 AutomaticoSiguienteZona:
@@ -331,7 +317,6 @@ AutomaticoZonaVacia:
     RET
 AplicarModoAutomatico ENDP
 
-; LEDs (2070h): bits 0-5 = luz de cada zona, bit 6 = modo manual
 EscribirLeds PROC
     MOV AL,0
     MOV BX,0
@@ -352,21 +337,19 @@ LedsEscribir:
     RET
 EscribirLeds ENDP
 
-; Entrada: AL = numero de 0 a 255.  Salida: TextoNumero = 3 caracteres
-; Resta 100, luego 10, y lo que queda son las unidades
 ConvertirATexto PROC
     MOV TextoNumero,'0'
     MOV TextoNumero+1,'0'
     MOV TextoNumero+2,'0'
 RestarCien:
     CMP AL,100
-    JC RestarDiez               ; AL menor que 100
+    JC RestarDiez
     SUB AL,100
     ADD TextoNumero,1
     JMP RestarCien
 RestarDiez:
     CMP AL,10
-    JC SumarUnidades            ; AL menor que 10
+    JC SumarUnidades
     SUB AL,10
     ADD TextoNumero+1,1
     JMP RestarDiez

@@ -1790,6 +1790,7 @@ object frmReporte: TfrmReporte
     Width = 120
     Height = 40
     Cancel = True
+    ModalResult = 2
     Caption = 'Volver'
     Font.Charset = DEFAULT_CHARSET
     Font.Color = clWindowText

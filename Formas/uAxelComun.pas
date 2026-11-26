@@ -25,20 +25,17 @@ const
   // Carpeta donde emu8086 deja los .exe compilados (respaldo).
   RUTA_EMU = 'C:\emu8086\MyBuild\';
 
-  // Archivos de datos (compartidos y propios), dentro de datos\.
-  ARCH_USUARIOS   = RUTA_DATOS + 'usuarios.txt';
-  ARCH_REPORTE    = RUTA_DATOS + 'reporte.txt';
-  ARCH_BITACORA   = RUTA_DATOS + 'bitacora.txt';
-  ARCH_ZONAS      = RUTA_DATOS + 'zonas.txt';
-  ARCH_VISITANTES = RUTA_DATOS + 'visitantes.txt';
-  ARCH_ACERCA     = RUTA_DATOS + 'acerca.txt';
-
-  // Archivos propios de Axel (entradas/salidas del login; sin uso actual).
-  ARCH_LOGIN_IN  = RUTA_AXEL + 'login_in.txt';
-  ARCH_LOGIN_OUT = RUTA_AXEL + 'login_out.txt';
-
-  // Logo del proyecto (JPEG). Se busca también junto al ejecutable.
+  // Logo del proyecto (JPEG). Se busca tambien junto al ejecutable.
   ARCH_LOGO = RUTA_RAIZ + 'Logo.jpeg';
+
+// Archivos de datos: la ruta real la decide uComun (disco virtual de emu8086),
+// asi que todas las pantallas leen y escriben en la misma carpeta que los .asm.
+function ARCH_USUARIOS: string;
+function ARCH_REPORTE: string;
+function ARCH_BITACORA: string;
+function ARCH_ZONAS: string;
+function ARCH_VISITANTES: string;
+function ARCH_ACERCA: string;
 
 /// Crea las carpetas C:\AutonoLux, C:\AutonoLux\Axel,
 /// C:\AutonoLux\Axel\Compilados y C:\AutonoLux\Axel\datos si no existen.
@@ -61,7 +58,44 @@ function CargarEmu(const NombreExe: string): Boolean;
 implementation
 
 uses
-  Vcl.Dialogs;
+  Vcl.Dialogs, uComun;
+
+function ARCH_USUARIOS: string;   begin Result := RutaArchivo('usuarios.txt');   end;
+function ARCH_REPORTE: string;    begin Result := RutaArchivo('reporte.txt');    end;
+function ARCH_BITACORA: string;   begin Result := RutaArchivo('bitacora.txt');   end;
+function ARCH_ZONAS: string;      begin Result := RutaArchivo('zonas.txt');      end;
+function ARCH_VISITANTES: string; begin Result := RutaArchivo('visitantes.txt'); end;
+function ARCH_ACERCA: string;     begin Result := RutaArchivo('acerca.txt');     end;
+
+procedure AsegurarCarpetas;
+begin
+  CrearArbolCarpetas;
+end;
+
+procedure CargarLogo(img: TImage);
+
+/// Aplica el tema visual de la aplicación (azul marino y amarillo).
+procedure AplicarTema(F: TForm);
+
+/// Valida USUARIO/CLAVE contra C:\AutonoLux\Axel\datos\usuarios.txt (sin ejecutar nada).
+/// Devuelve 0 = correcto, 2 = usuario/clave incorrectos, 3 = bloqueado.
+function ValidarCredenciales(const Usuario, Clave: string): Integer;
+
+/// Carga (lee) el .exe compilado indicado SIN ejecutarlo. Busca en
+/// Compilados, MyBuild o junto al ejecutable. Devuelve True si lo cargó.
+function CargarEmu(const NombreExe: string): Boolean;
+
+implementation
+
+uses
+  Vcl.Dialogs, uComun;
+
+function ARCH_USUARIOS: string;   begin Result := RutaArchivo('usuarios.txt');   end;
+function ARCH_REPORTE: string;    begin Result := RutaArchivo('reporte.txt');    end;
+function ARCH_BITACORA: string;   begin Result := RutaArchivo('bitacora.txt');   end;
+function ARCH_ZONAS: string;      begin Result := RutaArchivo('zonas.txt');      end;
+function ARCH_VISITANTES: string; begin Result := RutaArchivo('visitantes.txt'); end;
+function ARCH_ACERCA: string;     begin Result := RutaArchivo('acerca.txt');     end;
 
 procedure AsegurarCarpetas;
 begin
@@ -85,6 +119,8 @@ begin
 
   Candidatos := [
     ARCH_LOGO,
+    ExtractFilePath(ParamStr(0)) + 'Imagenes\logo.bmp',
+    ExtractFilePath(ParamStr(0)) + '..\..\Imagenes\logo.bmp',
     ExtractFilePath(ParamStr(0)) + 'Logo.jpeg',
     ExtractFilePath(ParamStr(0)) + 'logo.jpeg',
     ExtractFilePath(ParamStr(0)) + 'Logo.bmp',
@@ -164,9 +200,15 @@ begin
 
       n := Pos(',', Linea);
       if n = 0 then
-        Continue;
-      C := Trim(Copy(Linea, 1, n - 1));
-      E := Trim(Copy(Linea, n + 1, MaxInt));
+      begin
+        C := Trim(Linea);   // formato USUARIO,CLAVE (el que crea Login.asm)
+        E := '';
+      end
+      else
+      begin
+        C := Trim(Copy(Linea, 1, n - 1));
+        E := Trim(Copy(Linea, n + 1, MaxInt));
+      end;
 
       if SameText(U, Usuario) then
       begin

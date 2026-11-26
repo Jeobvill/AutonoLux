@@ -21,8 +21,10 @@ type
     procedure btnIngresarClick(Sender: TObject);
   private
     FIntentos: Integer;
+    FUsuario: string;
   public
-    { Public declarations }
+    procedure Preparar;
+    property Usuario: string read FUsuario;
   end;
 
 var
@@ -42,6 +44,16 @@ begin
   AplicarTema(Self);
   AsegurarCarpetas;
   CargarLogo(imgLogo);
+end;
+
+{ Deja la pantalla lista para un acceso nuevo (3 intentos) }
+procedure TfrmLogin.Preparar;
+begin
+  FIntentos := 3;
+  FUsuario := '';
+  lblIntentos.Caption := 'Intentos restantes: 3';
+  edUsuario.Clear;
+  edClave.Clear;
 end;
 
 procedure TfrmLogin.btnIngresarClick(Sender: TObject);
@@ -69,7 +81,10 @@ begin
   // 4) Evaluar el resultado.
   case Codigo of
     0:
-      ModalResult := mrOk;          // Acceso correcto.
+      begin
+        FUsuario := Usuario;
+        ModalResult := mrOk;        // Acceso correcto.
+      end;
     2:
       begin
         Dec(FIntentos);

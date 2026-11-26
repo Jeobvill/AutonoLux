@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, ExtCtrls, ComCtrls, Menus, uConsumo, uConfiguracion;
+  StdCtrls, ExtCtrls, ComCtrls, Menus, uConsumo, uConfiguracion, uIluminacion, uContador;
 
 type
   TfrmPrincipal = class(TForm)
@@ -28,6 +28,8 @@ type
     miSalir: TMenuItem;
     miAyuda: TMenuItem;
     miAcercaDe: TMenuItem;
+    procedure btn2Click(Sender: TObject);
+    procedure btn3Click(Sender: TObject);
     procedure btn5Click(Sender: TObject);
     procedure btn7Click(Sender: TObject);
   end;
@@ -38,6 +40,16 @@ var
 implementation
 
 {$R *.dfm}
+
+procedure TfrmPrincipal.btn2Click(Sender: TObject);
+begin
+  frmIluminacion.Show;
+end;
+
+procedure TfrmPrincipal.btn3Click(Sender: TObject);
+begin
+  frmContador.Show;
+end;
 
 procedure TfrmPrincipal.btn5Click(Sender: TObject);
 begin

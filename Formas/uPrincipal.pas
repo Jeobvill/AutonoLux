@@ -51,6 +51,7 @@ type
     FPopCalc: TPopupMenu;
     procedure btnCalcClick(Sender: TObject);
     procedure miAutoriaClick(Sender: TObject);
+    procedure miVisorClick(Sender: TObject);
     procedure AgregarMenus;
     procedure miCalcClick(Sender: TObject);
     procedure miVideoClick(Sender: TObject);
@@ -66,7 +67,7 @@ implementation
 
 {$R *.dfm}
 
-uses uComun, uCalcSergio, uCalcDaniel, uCalcJesus, uCalcAxel, uVideo;
+uses uComun, uCalcSergio, uCalcDaniel, uCalcJesus, uCalcAxel, uVideo, uVisor;
 
 procedure TfrmPrincipal.btn2Click(Sender: TObject);
 begin
@@ -160,11 +161,11 @@ const
   NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
     'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
 
-  function NuevoPanel(const Texto: string; X, Ancho: Integer; Evento: TNotifyEvent): TPanel;
+  function NuevoPanel(const Texto: string; X, Y, Ancho: Integer; Evento: TNotifyEvent): TPanel;
   begin
     Result := TPanel.Create(Self);
     Result.Parent := Self;
-    Result.SetBounds(X, 418, Ancho, 28);
+    Result.SetBounds(X, Y, Ancho, 26);
     Result.Caption := Texto;
     Result.Color := btn0.Color;
     Result.ParentBackground := False;
@@ -192,13 +193,23 @@ begin
     FPopCalc.Items.Add(Item);
   end;
   { botones pequenos debajo del logo y del titulo }
-  NuevoPanel('Coprocesador', 40, 135, btnCalcClick);
-  NuevoPanel('Trailer / Entrevista', 185, 135, miVideoClick);
-  { Ayuda -> Autoria de archivos }
+  NuevoPanel('Coprocesador', 40, 414, 135, btnCalcClick);
+  NuevoPanel('Trailer / Entrevista', 185, 414, 135, miVideoClick);
+  NuevoPanel('Visor de archivos .txt', 40, 443, 280, miVisorClick);
+  { Ayuda -> Visor de archivos de texto y Autoria de archivos }
+  Item := TMenuItem.Create(mmPrincipal);
+  Item.Caption := 'Visor de archivos de texto';
+  Item.OnClick := miVisorClick;
+  miAyuda.Add(Item);
   Item := TMenuItem.Create(mmPrincipal);
   Item.Caption := 'Autor' + #237 + 'a de archivos';
   Item.OnClick := miAutoriaClick;
   miAyuda.Add(Item);
+end;
+
+procedure TfrmPrincipal.miVisorClick(Sender: TObject);
+begin
+  MostrarVisor;
 end;
 
 procedure TfrmPrincipal.miAutoriaClick(Sender: TObject);

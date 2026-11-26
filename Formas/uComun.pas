@@ -7,6 +7,7 @@ interface
 uses Classes;
 
 function RutaArchivo(const Nombre: string): string;
+function RaizDatos: string;
 procedure CrearArbolCarpetas;
 { config.txt (Sergio): lineas "Opcion N: valor", igual que escribe Configuracion.asm.
   1 espera(min) 2 aforo 3 watts/lampara 4 tarifa 5 horario 6 sensibilidad }

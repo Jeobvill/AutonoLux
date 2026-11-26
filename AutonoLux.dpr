@@ -21,7 +21,8 @@ uses
   uCalcDaniel in 'Formas\uCalcDaniel.pas',
   uCalcJesus in 'Formas\uCalcJesus.pas',
   uCalcAxel in 'Formas\uCalcAxel.pas',
-  uVideo in 'Formas\uVideo.pas';
+  uVideo in 'Formas\uVideo.pas',
+  uVisor in 'Formas\uVisor.pas';
 
 begin
   Application.Initialize;

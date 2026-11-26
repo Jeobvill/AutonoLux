@@ -130,6 +130,7 @@
         <DCCReference Include="Formas\uCalcJesus.pas"/>
         <DCCReference Include="Formas\uCalcAxel.pas"/>
         <DCCReference Include="Formas\uVideo.pas"/>
+        <DCCReference Include="Formas\uVisor.pas"/>
         <DCCReference Include="Formas\uLogin.pas">
             <Form>frmLogin</Form>
         </DCCReference>

@@ -51,7 +51,7 @@ begin
   ForceDirectories(RAIZ + 'Jesus');
 end;
 
-{ Los .exe de Emu se buscan junto al programa Delphi y en su carpeta Emu8086 }
+{ Los .exe de Emu se buscan junto al programa Delphi y en la carpeta Emu8086 del proyecto }
 function BuscarEmu(const Exe: string): string;
 var
   Base: string;
@@ -62,6 +62,8 @@ begin
   Result := Base + 'Emu8086\' + Exe;
   if FileExists(Result) then Exit;
   Result := Base + '..\Emu8086\' + Exe;
+  if FileExists(Result) then Exit;
+  Result := Base + '..\..\Emu8086\' + Exe;   { Delphi compila en Win32\Debug }
   if FileExists(Result) then Exit;
   Result := '';
 end;

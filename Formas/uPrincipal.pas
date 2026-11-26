@@ -103,7 +103,7 @@ begin
   lblSesion.Caption := 'Sesion: esperando acceso...';
   HabilitarMenu(False);
   DeleteFile(RutaArchivo('login_out.txt'));   { evita leer un acceso viejo }
-  if not LanzarEmu('Login.exe') then
+  if (BuscarEmu('Login.exe') = '') or not LanzarEmu('Login.exe') then
   begin
     { sin Login.exe compilado el sistema abre en modo demostracion }
     FUsuario := 'DEMO';

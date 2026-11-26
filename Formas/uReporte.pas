@@ -39,7 +39,7 @@ var
 implementation
 
 uses
-  uAxelComun;
+  uAxelComun, uComun, StrUtils;
 
 {$R *.dfm}
 
@@ -75,7 +75,10 @@ begin
   edNota2.Clear;
   edNota3.Clear;
 
-  AgregarFuente('CABECERA (reporte.txt)', ARCH_REPORTE);
+  mmReporte.Lines.Add('REPORTE DE ILUMINACION - AUTONOLUX');
+  mmReporte.Lines.Add('Fecha: ' + FormatDateTime('dd/mm/yyyy hh:nn', Now));
+  mmReporte.Lines.Add('Usuario: ' + IfThen(UsuarioActual = '', 'sin sesion', UsuarioActual));
+  mmReporte.Lines.Add('');
   AgregarFuente('INCIDENCIAS DEL DÍA (bitacora.txt)', ARCH_BITACORA);
   AgregarFuente('RESUMEN DE OCUPACIÓN (zonas.txt)', ARCH_ZONAS);
   AgregarFuente('ENTRADAS / SALIDAS / PICO (visitantes.txt)', ARCH_VISITANTES);

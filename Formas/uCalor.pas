@@ -38,8 +38,8 @@ implementation
 uses uComun;
 
 const
-  { Linea de inicio de cada periodo dentro de zonas.txt: HOY, SEMANA, MES }
-  OFFSETS: array[0..2] of Integer = (0, 1872, 3744);
+  NOMBRES: array[0..5] of string = ('Recepcion', 'Lectura Silenciosa',
+    'Sala de Computo', 'Hemeroteca', 'Estantes A-F', 'Sala de Grupos');
 
 type
   TRegistro = record
@@ -84,23 +84,17 @@ var
 begin
   L := TStringList.Create;
   try
-    CargarLineas('zonas.txt', L);   { formato: Zona;Estado;Personas;Luz;Tiempo }
-    off := OFFSETS[rgPeriodo.ItemIndex];
+    { Datos reales: persona-segundos por zona acumulados desde mapa.txt (uComun.MuestrearCalor) }
+    off := rgPeriodo.ItemIndex;
     total := 0;
     for i := 0 to 5 do
     begin
-      if off + i < L.Count then
-      begin
-        Reg[i].Zona := Campo(L[off + i], 0);
-        Reg[i].Personas := StrToIntDef(Campo(L[off + i], 2), 0);
-        Reg[i].Tiempo := Campo(L[off + i], 4);
-      end
+      Reg[i].Zona := NOMBRES[i];
+      Reg[i].Personas := Round(CalorSeg[off, i]);
+      if Reg[i].Personas > 0 then
+        Reg[i].Tiempo := FormatFloat('0.00', CalorSeg[off, i] / 3600) + ' h-p'
       else
-      begin
-        Reg[i].Zona := 'Zona ' + IntToStr(i + 1);
-        Reg[i].Personas := 0;
         Reg[i].Tiempo := '-';
-      end;
       Inc(total, Reg[i].Personas);
     end;
 

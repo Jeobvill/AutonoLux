@@ -46,6 +46,7 @@ type
     procedure miAcercaDeClick(Sender: TObject);
   private
     FUsuario: string;
+    TicksGuardado: Integer;
     procedure PedirLogin;
     procedure RevisarLogin;
     procedure HabilitarMenu(Activo: Boolean);
@@ -109,6 +110,7 @@ begin
   if frmLogin.ShowModal = mrOk then
   begin
     FUsuario := frmLogin.Usuario;
+    UsuarioActual := FUsuario;
     lblSesion.Caption := 'Sesion: ' + FUsuario;
     HabilitarMenu(True);
   end
@@ -148,12 +150,24 @@ end;
 procedure TfrmPrincipal.FormShow(Sender: TObject);
 begin
   CrearArbolCarpetas;
-  CrearDatosEjemplo;
+  CargarConsumo;
+  CargarCalor;
   PedirLogin;
 end;
 
 procedure TfrmPrincipal.tmrHoraTimer(Sender: TObject);
 begin
+  { cada segundo se muestrea iluminacion.txt para el consumo real; se guarda cada 10 s }
+  MuestrearConsumo(tmrHora.Interval / 1000);
+  MuestrearCalor(tmrHora.Interval / 1000);
+  RegistrarEventos;
+  Inc(TicksGuardado);
+  if TicksGuardado >= 10 then
+  begin
+    TicksGuardado := 0;
+    GuardarConsumo;
+    GuardarCalor;
+  end;
   if sbEstado.Panels.Count > 1 then
   begin
     sbEstado.Panels[0].Text := DateToStr(Date);

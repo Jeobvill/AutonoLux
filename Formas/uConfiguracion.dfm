@@ -13,6 +13,8 @@ object frmConfiguracion: TfrmConfiguracion
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poScreenCenter
+  OnCreate = FormCreate
+  OnShow = FormShow
   TextHeight = 17
   object lblAyuda: TLabel
     Left = 30

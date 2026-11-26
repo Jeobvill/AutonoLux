@@ -43,7 +43,7 @@ CapturaEvento          DB 31,0,32 DUP(0)    ; buffer de DOS: maximo, longitud y 
 
 ; ---- Pedazos del registro de bitacora.txt (78 bytes por evento)
 TextoInicioDeRegistro  DB "| "
-TextoHora              DB "10:42"           ; hora fija (no hay reloj en la biblioteca)
+TextoHora              DB "00:00"           ; se rellena con la hora real (HoraEnTexto)
 TextoAntesDeZona       DB "  Z"
 TextoEspacio           DB " "
 TextoDosEspacios       DB "  "
@@ -89,15 +89,15 @@ BitacoraRen18     DB "|---------------------------------------------------------
 BitacoraRen19     DB "| [A] Agregar  [S] Siguiente  [P] Anterior  [F] Filtrar  [I] Imprimir      |"
 BitacoraRen20     DB "| [R] Ronda del Robot  [ESC] Volver                                        |"
 
-; ---- Texto base de bitacora.txt: 8 eventos de ejemplo. Se escribe solo si el archivo no existe
-TextoBitacora     DB "| 08:00  Z1 Recepcion           Presencia detectada, luz ON     AUTO       |",13,10
-                  DB "| 08:12  Z2 Lectura Silenciosa  Presencia detectada, luz ON     AUTO       |",13,10
-                  DB "| 09:30  Z3 Sala de Computo     Luz apagada por inactividad     AUTO       |",13,10
-                  DB "| 10:05  Z2 Lectura Silenciosa  Cambio manual de luz: OFF       ADMIN      |",13,10
-                  DB "| 10:42  Z1 Recepcion           Visita de ronda verificada      ROBOT      |",13,10
-                  DB "| 11:30  Z5 Estantes A-F        Presencia detectada, luz ON     AUTO       |",13,10
-                  DB "| 12:15  Z4 Hemeroteca          Luz apagada por inactividad     AUTO       |",13,10
-                  DB "| 13:00  Z6 Sala de Grupos      Cambio manual de luz: ON        ADMIN      |",13,10
+; ---- Texto base de bitacora.txt: vacia (sin eventos inventados). Se escribe solo si el archivo no existe
+TextoBitacora     DB "|   (sin eventos registrados todavia)                                      |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
+                  DB "|                                                                          |",13,10
 
 .CODE
 Inicio:
@@ -224,6 +224,8 @@ AgregarEventoABitacora PROC
     CERRAR_ARCHIVO ID           ; bitacora llena
     RET
 AgregarHayLugar:
+    MOV DI,OFFSET TextoHora      ; hora real del sistema
+    CALL HoraEnTexto
     ESCRIBIR_ARCHIVO ID,2,TextoInicioDeRegistro
     ESCRIBIR_ARCHIVO ID,5,TextoHora
     ESCRIBIR_ARCHIVO ID,3,TextoAntesDeZona
@@ -259,6 +261,28 @@ AgregarTerminarRegistro:
 FinAgregarEvento:
     RET
 AgregarEventoABitacora ENDP
+
+; Escribe la hora real de DOS (INT 21h/2Ch) como "HH:MM" en 5 bytes.  Entrada: DI = destino
+HoraEnTexto PROC
+    MOV AH,2Ch
+    INT 21H                     ; CH = horas, CL = minutos
+    PUSH CX
+    MOV AL,CH
+    AAM                         ; AH = decenas, AL = unidades
+    ADD AX,3030H
+    MOV [DI],AH
+    MOV [DI+1],AL
+    MOV BYTE PTR [DI+2],':'
+    POP CX
+    MOV AL,CL
+    AAM
+    ADD AX,3030H
+    MOV [DI+3],AH
+    MOV [DI+4],AL
+    RET
+HoraEnTexto ENDP
+
+
 
 ; Escribe los 18 caracteres del nombre de la zona ZonaDelEvento
 EscribirNombreDeZona PROC

@@ -40,7 +40,7 @@ TextoTermometroAlerta DB "ALERTA "
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"
 
 ; ---- Registro de alerta para bitacora.txt (78 bytes: 76 caracteres + CR LF)
-TextoRegistroAlerta DB "| 10:42  Z1 Recepcion           Alerta: temperatura alta        AUTO       |",13,10
+TextoRegistroAlerta DB "| 00:00  -- Termometro          Alerta: temperatura alta        AUTO       |",13,10
 
 ; ---- Buffer donde se lee bitacora.txt (solo para llegar al final del archivo)
 BufferBitacora    DB 1872 DUP(?)
@@ -299,11 +299,35 @@ AlertaCrearBitacora:
     MOV ID,AX
     JC FinRegistrarAlerta
 AlertaEscribirRegistro:
+    MOV DI,OFFSET TextoRegistroAlerta+2   ; hora real de la alerta
+    CALL HoraEnTexto
     ESCRIBIR_ARCHIVO ID,78,TextoRegistroAlerta
     CERRAR_ARCHIVO ID
 FinRegistrarAlerta:
     RET
 RegistrarAlertaEnBitacora ENDP
+
+; Escribe la hora real de DOS (INT 21h/2Ch) como "HH:MM" en 5 bytes.  Entrada: DI = destino
+HoraEnTexto PROC
+    MOV AH,2Ch
+    INT 21H                     ; CH = horas, CL = minutos
+    PUSH CX
+    MOV AL,CH
+    AAM                         ; AH = decenas, AL = unidades
+    ADD AX,3030H
+    MOV [DI],AH
+    MOV [DI+1],AL
+    MOV BYTE PTR [DI+2],':'
+    POP CX
+    MOV AL,CL
+    AAM
+    ADD AX,3030H
+    MOV [DI+3],AH
+    MOV [DI+4],AL
+    RET
+HoraEnTexto ENDP
+
+
 
 
 ;==================== CONVERSION ====================

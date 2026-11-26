@@ -13,6 +13,7 @@ object frmConsumo: TfrmConsumo
   Font.Name = 'Segoe UI'
   Font.Style = []
   Position = poScreenCenter
+  OnCreate = FormCreate
   TextHeight = 17
   object lblTotal: TLabel
     Left = 30

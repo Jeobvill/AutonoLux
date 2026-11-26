@@ -95,32 +95,32 @@
         <DelphiCompile Include="$(MainSource)">
             <MainSource>MainSource</MainSource>
         </DelphiCompile>
-        <DCCReference Include="uPrincipal.pas">
+        <DCCReference Include="Formas\uPrincipal.pas">
             <Form>frmPrincipal</Form>
         </DCCReference>
-        <DCCReference Include="uConfiguracion.pas">
+        <DCCReference Include="Formas\uConfiguracion.pas">
             <Form>frmConfiguracion</Form>
         </DCCReference>
-        <DCCReference Include="uConsumo.pas">
+        <DCCReference Include="Formas\uConsumo.pas">
             <Form>frmConsumo</Form>
         </DCCReference>
-        <DCCReference Include="uIluminacion.pas">
+        <DCCReference Include="Formas\uIluminacion.pas">
             <Form>frmIluminacion</Form>
         </DCCReference>
-        <DCCReference Include="uContador.pas">
+        <DCCReference Include="Formas\uContador.pas">
             <Form>frmContador</Form>
         </DCCReference>
-        <DCCReference Include="uMapa.pas">
+        <DCCReference Include="Formas\uMapa.pas">
             <Form>frmMapa</Form>
         </DCCReference>
-        <DCCReference Include="uComun.pas"/>
-        <DCCReference Include="uMonitor.pas">
+        <DCCReference Include="Formas\uComun.pas"/>
+        <DCCReference Include="Formas\uMonitor.pas">
             <Form>frmMonitor</Form>
         </DCCReference>
-        <DCCReference Include="uCalor.pas">
+        <DCCReference Include="Formas\uCalor.pas">
             <Form>frmCalor</Form>
         </DCCReference>
-        <DCCReference Include="uBitacora.pas">
+        <DCCReference Include="Formas\uBitacora.pas">
             <Form>frmBitacora</Form>
         </DCCReference>
         <BuildConfiguration Include="Base">

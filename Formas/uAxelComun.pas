@@ -82,6 +82,8 @@ begin
 
   Candidatos := [
     ARCH_LOGO,
+    ExtractFilePath(ParamStr(0)) + 'Imagenes\Logo.jpeg',
+    ExtractFilePath(ParamStr(0)) + '..\..\Imagenes\Logo.jpeg',
     ExtractFilePath(ParamStr(0)) + 'Imagenes\logo.bmp',
     ExtractFilePath(ParamStr(0)) + '..\..\Imagenes\logo.bmp',
     ExtractFilePath(ParamStr(0)) + 'Logo.jpeg',

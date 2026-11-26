@@ -18,6 +18,25 @@ INCLUDE Biblioteca.txt
     RutaConsumo       DB "C:\AutonoLux\Sergio\consumo.txt",0
     RutaIluminacion   DB "C:\AutonoLux\Jesus\iluminacion.txt",0
     BufferIlum        DB 180 DUP(0)  ; 6 registros de 30 bytes de iluminacion.txt (real)
+; ---- Renglones en vivo (se llenan con los datos reales de iluminacion.txt y config.txt)
+FilasConsumo      DB "| 1 Recepcion            0          0 %          0 W        AUTO           |"
+                  DB "| 2 Lectura Silenciosa   0          0 %          0 W        AUTO           |"
+                  DB "| 3 Sala de Computo      0          0 %          0 W        AUTO           |"
+                  DB "| 4 Hemeroteca           0          0 %          0 W        AUTO           |"
+                  DB "| 5 Estantes A-F         0          0 %          0 W        AUTO           |"
+                  DB "| 6 Sala de Grupos       0          0 %          0 W        AUTO           |"
+RenCabecera       DB "| #  ZONA               LAMP.     INT.        POT. W        MODO           |"
+RenTitulo         DB "| CONSUMO ENERGETICO (datos de iluminacion.txt y config.txLampara: 000 W   |"
+RenTotal          DB "| TOTAL: lamparas encendidas  0 de  0  zonas con luz: 0 de 6               |"
+RenSinAuto        DB "| Sin automatizacion (todas las luces ON):   0 W  Encendido ahora:    0 W  |"
+TextoAuto4         DB "AUTO"
+TextoMan4          DB "MAN "
+LampsFila         DW 0
+IntFila           DW 0
+PotFila           DW 0
+TotalPot          DW 0
+ZonasEnc          DW 0
+
     RutaConfiguracion DB "C:\AutonoLux\Sergio\config.txt",0
     BufferConfig      DB 256 DUP(0)  ; config.txt leido (lo escribe Configuracion.asm)
     HoraAbre          DB 8           ; horario de operacion (opcion 5 de config.txt)
@@ -104,6 +123,7 @@ ConsumoAbierto:
     CALL LeerConfiguracion      ; watts por lampara y horario reales (config.txt)
     CALL LeerIluminacion        ; datos reales: zonas encendidas segun iluminacion.txt
     CALL CalcularConsumo
+    CALL PintarFilasConsumo     ; renglones por zona con datos reales
     CALL PintarResultadosConsumo
 ConsumoEsperarTecla:
     RASTREO
@@ -248,6 +268,192 @@ PersianasCerrar:
     RET
 ControlPersianas ENDP
 
+; Convierte los CX caracteres que empiezan en [DI] en un numero (AX); ignora espacios
+ParseDigitos PROC
+    XOR AX,AX
+ParseSiguiente:
+    CMP CX,0
+    JE FinParse
+    MOV BL,[DI]
+    CMP BL,'0'
+    JC ParseSalta
+    CMP BL,':'
+    JNC ParseSalta
+    MOV DX,10
+    MUL DX
+    SUB BL,'0'
+    MOV BH,0
+    ADD AX,BX
+ParseSalta:
+    ADD DI,1
+    SUB CX,1
+    JMP ParseSiguiente
+FinParse:
+    RET
+ParseDigitos ENDP
+
+; Escribe AX como CX caracteres en [DI], sin ceros a la izquierda
+PonerNum PROC
+    PUSH AX
+    PUSH BX
+    PUSH CX
+    PUSH DX
+    PUSH SI
+    PUSH DI
+    PUSH BP
+    MOV BP,CX
+    MOV SI,DI
+    ADD DI,CX
+    SUB DI,1
+    MOV BX,10
+NumSiguiente:
+    XOR DX,DX
+    DIV BX
+    ADD DL,'0'
+    MOV [DI],DL
+    SUB DI,1
+    SUB CX,1
+    CMP CX,0
+    JNE NumSiguiente
+    MOV CX,BP
+    SUB CX,1
+NumBlanco:
+    CMP BYTE PTR [SI],'0'
+    JNE FinNum
+    MOV BYTE PTR [SI],' '
+    ADD SI,1
+    SUB CX,1
+    CMP CX,0
+    JNE NumBlanco
+FinNum:
+    POP BP
+    POP DI
+    POP SI
+    POP DX
+    POP CX
+    POP BX
+    POP AX
+    RET
+PonerNum ENDP
+
+; Llena y dibuja los renglones por zona: lamparas encendidas, intensidad, potencia y modo
+PintarFilasConsumo PROC
+    MOV TotalPot,0
+    MOV BP,0
+FilaConsumoSiguiente:
+    MOV AX,30
+    MUL BP
+    MOV SI,AX                   ; SI = registro de la zona en iluminacion.txt
+    MOV LampsFila,0
+    MOV IntFila,0
+    MOV PotFila,0
+    CMP BufferIlum[SI+18],'1'
+    JNE FilaConsumoApagada
+    MOV AX,LamparasPorZona
+    MOV LampsFila,AX
+    LEA DI,BufferIlum
+    ADD DI,SI
+    ADD DI,24                   ; "int NNN%" empieza en la columna 24
+    MOV CX,3
+    CALL ParseDigitos
+    MOV IntFila,AX
+    MOV AX,LampsFila
+    MUL WattsLampara            ; lamparas x watts
+    MUL IntFila                 ; x intensidad
+    MOV BX,100
+    DIV BX                      ; / 100
+    MOV PotFila,AX
+    ADD TotalPot,AX
+FilaConsumoApagada:
+    MOV AX,76
+    MUL BP
+    LEA DI,FilasConsumo
+    ADD DI,AX
+    PUSH DI
+    ADD DI,24
+    MOV AX,LampsFila
+    MOV CX,2
+    CALL PonerNum
+    POP DI
+    PUSH DI
+    ADD DI,34
+    MOV AX,IntFila
+    MOV CX,3
+    CALL PonerNum
+    POP DI
+    PUSH DI
+    ADD DI,46
+    MOV AX,PotFila
+    MOV CX,4
+    CALL PonerNum
+    POP DI
+    ADD DI,60
+    MOV AX,30
+    MUL BP
+    MOV SI,AX
+    CMP BufferIlum[SI+12],'M'
+    JE FilaConsumoManual
+    LEA SI,TextoAuto4
+    JMP FilaConsumoModo
+FilaConsumoManual:
+    LEA SI,TextoMan4
+FilaConsumoModo:
+    MOV CX,4
+    CLD
+    REP MOVSB
+    ADD BP,1
+    CMP BP,6
+    JNE FilaConsumoSiguiente
+    ; ---- potencia total encendida: la misma que se ve en el LED_Display
+    MOV AX,TotalPot
+    MOV mulR,AX
+    ; ---- titulo: watts por lampara
+    LEA DI,RenTitulo+67
+    MOV AX,WattsLampara
+    MOV CX,3
+    CALL PonerNum
+    ; ---- total: lamparas encendidas, instaladas y zonas con luz
+    LEA DI,RenTotal+29
+    MOV AX,ZonasEnc
+    MUL LamparasPorZona
+    MOV CX,2
+    CALL PonerNum
+    LEA DI,RenTotal+35
+    MOV AX,LamparasPorZona
+    MOV BX,6
+    MUL BX
+    MOV CX,2
+    CALL PonerNum
+    LEA DI,RenTotal+54
+    MOV AX,ZonasEnc
+    MOV CX,1
+    CALL PonerNum
+    ; ---- sin automatizacion: 6 zonas x lamparas x watts
+    LEA DI,RenSinAuto+42
+    MOV AX,LamparasPorZona
+    MOV BX,6
+    MUL BX
+    MUL WattsLampara
+    MOV CX,4
+    CALL PonerNum
+    LEA DI,RenSinAuto+67
+    MOV AX,TotalPot
+    MOV CX,4
+    CALL PonerNum
+    ; ---- dibujar
+    IMPCAD_COLOR RenTitulo,76,7,0,0,0,1Eh
+    IMPCAD_COLOR RenCabecera,76,9,0,0,0,1Bh
+    IMPCAD_COLOR FilasConsumo,76,11,0,0,0,1Fh
+    IMPCAD_COLOR FilasConsumo+76,76,12,0,0,0,1Fh
+    IMPCAD_COLOR FilasConsumo+152,76,13,0,0,0,1Fh
+    IMPCAD_COLOR FilasConsumo+228,76,14,0,0,0,1Fh
+    IMPCAD_COLOR FilasConsumo+304,76,15,0,0,0,1Fh
+    IMPCAD_COLOR FilasConsumo+380,76,16,0,0,0,1Fh
+    IMPCAD_COLOR RenTotal,76,18,0,0,0,1Eh
+    IMPCAD_COLOR RenSinAuto,76,20,0,0,0,1Fh
+    RET
+PintarFilasConsumo ENDP
+
 ; Lee iluminacion.txt (Jesus) y carga los operandos del MUL y del SUB con valores reales
 ; mulN1 = zonas con luz encendida x lamparas por zona ; mulN2 = watts por lampara
 ; restaN1 = 100 (sin automatizacion todo encendido) ; restaN2 = % de zonas encendidas
@@ -271,6 +477,7 @@ SiguienteZonaIlum:
     ADD SI,30
     CMP SI,180
     JC ContarZonas
+    MOV ZonasEnc,CX
     MOV AX,LamparasPorZona
     MUL CX                      ; lamparas encendidas = zonas x lamparas por zona
     MOV mulN1,AX

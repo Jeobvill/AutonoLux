@@ -24,9 +24,8 @@ uses SysUtils, Windows, ShellAPI, Dialogs;
   (igual que la ruta que usa el proyecto de Veliz: C:\emu8086\vdrive\C\...). }
 function CarpetaEmu: string;
 const
-  RUTAS: array[0..4] of string = ('C:\emu8086\', 'C:\LI\lemu8086\',
-    'C:\Program Files (x86)\emu8086\', 'C:\Program Files\emu8086\',
-    'C:\Codigos\lemu8086\');
+  RUTAS: array[0..3] of string = ('C:\LI\lemu8086\emu8086\', 'C:\emu8086\',
+    'C:\Program Files (x86)\emu8086\', 'C:\Program Files\emu8086\');
 var
   i: Integer;
 begin

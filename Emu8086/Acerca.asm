@@ -13,9 +13,9 @@ INCLUDE Biblioteca.txt
 
 .DATA
     ID                DW ?        
-    RutaRaiz          DB "C:\LI\lemu8086\Proyectos Hibridos\Autonolux\Emu8086",0
-    RutaAxel          DB "C:\LI\lemu8086\Proyectos Hibridos\Autonolux\Emu8086\Axel",0
-    RutaAcerca        DB "C:\LI\lemu8086\Proyectos Hibridos\Autonolux\Emu8086\Axel\acerca.txt",0
+    RutaRaiz          DB "C:\AutonoLux",0
+    RutaAxel          DB "C:\AutonoLux\Axel",0
+    RutaAcerca        DB "C:\AutonoLux\Axel\acerca.txt",0
 
 ; ---- Textos cortos
 MensajeErrorArchivo DB "No se pudo abrir el archivo. Pulse una tecla.$"

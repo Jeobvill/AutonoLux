@@ -155,6 +155,34 @@ begin
     Result := CarpetaEmu + 'emu8086.exe';
 end;
 
+{ Abre el .asm en emu8086 y, si AUTO_EMULAR, manda F5 (Emulate) para que compile y corra
+  sin que el usuario toque nada. F5 es el atajo de "emulate" en emu8086. }
+procedure AbrirYEmular(const Emu, Ruta: string);
+const
+  AUTO_EMULAR = True;
+var
+  Info: TShellExecuteInfo;
+begin
+  FillChar(Info, SizeOf(Info), 0);
+  Info.cbSize := SizeOf(Info);
+  Info.fMask := SEE_MASK_NOCLOSEPROCESS;
+  Info.lpVerb := 'open';
+  Info.lpFile := PChar(Emu);
+  Info.lpParameters := PChar('"' + Ruta + '"');
+  Info.lpDirectory := PChar(ExtractFilePath(Emu));
+  Info.nShow := SW_SHOWNORMAL;
+  if not ShellExecuteEx(@Info) then Exit;
+  if AUTO_EMULAR and (Info.hProcess <> 0) then
+  begin
+    WaitForInputIdle(Info.hProcess, 10000);   { espera a que emu8086 termine de abrir }
+    Sleep(1500);                              { y de cargar el archivo }
+    keybd_event(VK_F5, 0, 0, 0);
+    keybd_event(VK_F5, 0, KEYEVENTF_KEYUP, 0);
+  end;
+  if Info.hProcess <> 0 then
+    CloseHandle(Info.hProcess);
+end;
+
 { True si se abrio el programa en emu8086; las pantallas Delphi solo llaman y Emu ejecuta }
 function LanzarEmu(const Exe: string): Boolean;
 var
@@ -169,8 +197,7 @@ begin
   end;
   Emu := BuscarEmulador;
   if Emu <> '' then
-    ShellExecute(0, 'open', PChar(Emu), PChar('"' + Ruta + '"'),
-      PChar(ExtractFilePath(Emu)), SW_SHOWNORMAL)
+    AbrirYEmular(Emu, Ruta)
   else   { emu8086 no esta en las rutas conocidas: lo abre Windows por asociacion }
     ShellExecute(0, 'open', PChar(Ruta), nil, PChar(ExtractFilePath(Ruta)), SW_SHOWNORMAL);
 end;

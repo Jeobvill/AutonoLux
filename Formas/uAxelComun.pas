@@ -73,43 +73,6 @@ begin
 end;
 
 procedure CargarLogo(img: TImage);
-
-/// Aplica el tema visual de la aplicación (azul marino y amarillo).
-procedure AplicarTema(F: TForm);
-
-/// Valida USUARIO/CLAVE contra C:\AutonoLux\Axel\datos\usuarios.txt (sin ejecutar nada).
-/// Devuelve 0 = correcto, 2 = usuario/clave incorrectos, 3 = bloqueado.
-function ValidarCredenciales(const Usuario, Clave: string): Integer;
-
-/// Carga (lee) el .exe compilado indicado SIN ejecutarlo. Busca en
-/// Compilados, MyBuild o junto al ejecutable. Devuelve True si lo cargó.
-function CargarEmu(const NombreExe: string): Boolean;
-
-implementation
-
-uses
-  Vcl.Dialogs, uComun;
-
-function ARCH_USUARIOS: string;   begin Result := RutaArchivo('usuarios.txt');   end;
-function ARCH_REPORTE: string;    begin Result := RutaArchivo('reporte.txt');    end;
-function ARCH_BITACORA: string;   begin Result := RutaArchivo('bitacora.txt');   end;
-function ARCH_ZONAS: string;      begin Result := RutaArchivo('zonas.txt');      end;
-function ARCH_VISITANTES: string; begin Result := RutaArchivo('visitantes.txt'); end;
-function ARCH_ACERCA: string;     begin Result := RutaArchivo('acerca.txt');     end;
-
-procedure AsegurarCarpetas;
-begin
-  if not DirectoryExists(RUTA_RAIZ) then
-    ForceDirectories(RUTA_RAIZ);
-  if not DirectoryExists(RUTA_AXEL) then
-    ForceDirectories(RUTA_AXEL);
-  if not DirectoryExists(RUTA_COMPILADOS) then
-    ForceDirectories(RUTA_COMPILADOS);
-  if not DirectoryExists(RUTA_DATOS) then
-    ForceDirectories(RUTA_DATOS);
-end;
-
-procedure CargarLogo(img: TImage);
 var
   Candidatos: array of string;
   i: Integer;

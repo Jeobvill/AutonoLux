@@ -51,34 +51,62 @@ begin
   ForceDirectories(RAIZ + 'Jesus');
 end;
 
-{ Los .exe de Emu se buscan junto al programa Delphi y en su carpeta Emu8086 }
+{ Un .exe de Emu8086 es un programa DOS de 16 bits: Windows moderno no lo ejecuta solo.
+  Por eso Delphi busca el .asm del mismo nombre (junto al programa, en Emu8086, ..\Emu8086
+  o ..\..\Emu8086) y lo abre en emu8086, donde se emula con sus devices. }
 function BuscarEmu(const Exe: string): string;
 var
-  Base: string;
+  Base, NombreAsm: string;
 begin
   Base := ExtractFilePath(ParamStr(0));
-  Result := Base + Exe;
+  NombreAsm := ChangeFileExt(Exe, '.asm');
+  Result := Base + NombreAsm;
   if FileExists(Result) then Exit;
-  Result := Base + 'Emu8086\' + Exe;
+  Result := Base + 'Emu8086\' + NombreAsm;
   if FileExists(Result) then Exit;
-  Result := Base + '..\Emu8086\' + Exe;
+  Result := Base + '..\Emu8086\' + NombreAsm;
+  if FileExists(Result) then Exit;
+  Result := Base + '..\..\Emu8086\' + NombreAsm;   { Delphi compila en Win32\Debug }
   if FileExists(Result) then Exit;
   Result := '';
 end;
 
-{ True si el programa de Emu se lanzo; las pantallas Delphi solo llaman y Emu ejecuta }
+{ Programa emu8086.exe: lugares donde suele instalarse }
+function BuscarEmulador: string;
+const
+  RUTAS: array[0..4] of string = ('C:\LI\lemu8086\emu8086.exe',
+    'C:\emu8086\emu8086.exe', 'C:\Program Files (x86)\emu8086\emu8086.exe',
+    'C:\Program Files\emu8086\emu8086.exe', 'C:\Codigos\lemu8086\emu8086.exe');
+var
+  i: Integer;
+begin
+  Result := '';
+  for i := 0 to High(RUTAS) do
+    if FileExists(RUTAS[i]) then
+    begin
+      Result := RUTAS[i];
+      Exit;
+    end;
+end;
+
+{ True si se abrio el programa en emu8086; las pantallas Delphi solo llaman y Emu ejecuta }
 function LanzarEmu(const Exe: string): Boolean;
 var
-  Ruta: string;
+  Ruta, Emu: string;
 begin
   Ruta := BuscarEmu(Exe);
   Result := Ruta <> '';
   if not Result then
   begin
-    ShowMessage('No se encontr' + #243 + ' ' + Exe + ' junto al programa ni en Emu8086.');
+    ShowMessage('No se encontr' + #243 + ' ' + ChangeFileExt(Exe, '.asm') + ' en la carpeta Emu8086.');
     Exit;
   end;
-  ShellExecute(0, 'open', PChar(Ruta), nil, PChar(ExtractFilePath(Ruta)), SW_SHOWNORMAL);
+  Emu := BuscarEmulador;
+  if Emu <> '' then
+    ShellExecute(0, 'open', PChar(Emu), PChar('"' + Ruta + '"'),
+      PChar(ExtractFilePath(Emu)), SW_SHOWNORMAL)
+  else   { emu8086 no esta en las rutas conocidas: lo abre Windows por asociacion }
+    ShellExecute(0, 'open', PChar(Ruta), nil, PChar(ExtractFilePath(Ruta)), SW_SHOWNORMAL);
 end;
 
 { Carga un .txt; quita lineas vacias al final. False si no existe o esta bloqueado }

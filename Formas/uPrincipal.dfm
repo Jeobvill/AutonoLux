@@ -7408,6 +7408,7 @@ object frmPrincipal: TfrmPrincipal
     Font.Style = [fsBold]
     ParentFont = False
     Transparent = True
+    OnDblClick = lblSesionDblClick
   end
   object btn1: TPanel
     Left = 360

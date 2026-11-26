@@ -16,6 +16,11 @@ INCLUDE Biblioteca.txt
     RutaRaiz          DB "C:\AutonoLux",0
     RutaSergio        DB "C:\AutonoLux\Sergio",0
     RutaConsumo       DB "C:\AutonoLux\Sergio\consumo.txt",0
+    RutaIluminacion   DB "C:\AutonoLux\Jesus\iluminacion.txt",0
+    BufferIlum        DB 180 DUP(0)  ; 6 registros de 30 bytes de iluminacion.txt (real)
+    LamparasPorZona   DW 4           ; lamparas instaladas por zona
+    WattsLampara      DW 18          ; potencia por lampara (opcion 3 de Configuracion)
+    PorcentajeZonas   DB 0,17,33,50,67,83,100  ; % de zonas encendidas (0 a 6)
 
 ; ---- MUL del catedratico: potencia = lamparas x watts por lampara (palabras). Inician vacios
 mulN1             DW 0          ; lamparas de la zona
@@ -54,7 +59,7 @@ TextoConsumo       DB "+========================================================
                   DB "| 6 Sala de Grupos    ___         ___ h        ___            $ ___        |",13,10
                   DB "|--------------------------------------------------------------------------|",13,10
                   DB "| TOTAL                                        ___ kWh        $ ___        |",13,10
-                  DB "| POTENCIA ESTANTES A-F: ___ W          AHORRO: ___ %                      |",13,10
+                  DB "| POTENCIA TOTAL ENCEND. ___ W          AHORRO: ___ %                      |",13,10
                   DB "| Sin automatizacion (luces siempre ON): ___ kWh                           |",13,10
                   DB "| [ESC] Volver                                                             |",13,10
                   DB "+==========================================================================+",13,10
@@ -90,6 +95,7 @@ ConsumoAbierto:
     JC ErrorAlLeerConsumo
     CERRAR_ARCHIVO ID
     CALL DibujarConsumo
+    CALL LeerIluminacion        ; datos reales: zonas encendidas segun iluminacion.txt
     CALL CalcularConsumo
     CALL PintarResultadosConsumo
 ConsumoEsperarTecla:
@@ -143,6 +149,39 @@ DibujarConsumo PROC
 DibujarConsumo ENDP
 
 ; Calculos del catedratico (se copian tal como los dio)
+; Lee iluminacion.txt (Jesus) y carga los operandos del MUL y del SUB con valores reales
+; mulN1 = zonas con luz encendida x lamparas por zona ; mulN2 = watts por lampara
+; restaN1 = 100 (sin automatizacion todo encendido) ; restaN2 = % de zonas encendidas
+LeerIluminacion PROC
+    MOV mulN1,0
+    MOV AX,WattsLampara
+    MOV mulN2,AX
+    MOV restaN1,100
+    MOV restaN2,0
+    ABRIR_ARCHIVO RutaIluminacion,0
+    JC FinLeerIlum              ; si aun no hay iluminacion.txt todo queda en cero
+    LEER_ARCHIVO 180,BufferIlum,ID
+    CERRAR_ARCHIVO ID
+    XOR CX,CX                   ; zonas encendidas
+    XOR SI,SI                   ; inicio del registro
+ContarZonas:
+    CMP BufferIlum[SI+18],'1'   ; "Zona N modo X luz L": L esta en la columna 18
+    JNE SiguienteZonaIlum
+    INC CX
+SiguienteZonaIlum:
+    ADD SI,30
+    CMP SI,180
+    JC ContarZonas
+    MOV AX,LamparasPorZona
+    MUL CX                      ; lamparas encendidas = zonas x lamparas por zona
+    MOV mulN1,AX
+    MOV BX,CX
+    MOV AL,PorcentajeZonas[BX]
+    MOV restaN2,AL
+FinLeerIlum:
+    RET
+LeerIluminacion ENDP
+
 CalcularConsumo PROC
     ; ---- MUL: potencia = lamparas x watts por lampara ----
     XOR AX,AX

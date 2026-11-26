@@ -49,7 +49,7 @@ implementation
 
 {$R *.dfm}
 
-uses uComun;
+uses uComun, StrUtils;
 
 const
   POR_PAGINA = 8;
@@ -93,7 +93,7 @@ end;
 
 procedure TfrmBitacora.CargarBitacora;
 begin
-  CargarLineas('bitacora.txt', FTodos);   { formato: Hora;Zona;Evento;Usuario }
+  CargarLineas('eventos.txt', FTodos);   { formato: Hora;Zona;Evento;Usuario (lo escribe uComun.RegistrarEventos) }
 end;
 
 procedure TfrmBitacora.AplicarFiltro;
@@ -158,14 +158,14 @@ var
 begin
   Zona := 'Zona 1';
   Evento := '';
-  Usuario := '';
+  Usuario := UsuarioActual;
   if not InputQuery('Agregar registro', 'Zona (Zona 1 ... Zona 6):', Zona) then Exit;
   if not InputQuery('Agregar registro', 'Evento:', Evento) then Exit;
   if not InputQuery('Agregar registro', 'Usuario:', Usuario) then Exit;
 
   CargarBitacora;
-  FTodos.Add(FormatDateTime('hh:nn', Now) + ';' + Zona + ';' + Evento + ';' + Usuario);
-  FTodos.SaveToFile(RutaArchivo('bitacora.txt'));
+  FTodos.Add(FormatDateTime('hh:nn:ss', Now) + ';' + Zona + ';' + Evento + ';' + IfThen(Usuario = '', UsuarioActual, Usuario));
+  FTodos.SaveToFile(RutaArchivo('eventos.txt'));
   AplicarFiltro;
 end;
 

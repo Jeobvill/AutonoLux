@@ -35,6 +35,7 @@ RenglonActual          DB 0
 ErrorDeArchivo         DB 0     ; 1 = no se pudo leer bitacora.txt
 
 ; ---- Evento nuevo
+ComandoRobot           DB 0
 TipoDeEvento           DB 'M'   ; 'M' manual (lo escribe el operador), 'R' ronda del Robot
 ZonaDelEvento          DB '1'
 LongitudEvento         DW 0
@@ -578,6 +579,15 @@ RondaHayLugar:
     MOV TipoDeEvento,'R'
     MOV ZonaDelEvento,'1'
 RondaSiguienteZona:
+    MOV AL,4                    ; 4 = examinar lo que hay enfrente
+    CALL EnviarComandoRobot
+    MOV DX,10
+    IN AL,DX                    ; puerto 10: 255 = pared
+    CMP AL,255
+    JNE RondaAvanzar
+    MOV AL,3                    ; 3 = girar a la derecha para no chocar
+    CALL EnviarComandoRobot
+RondaAvanzar:
     MOV AL,1                    ; 1 = avanzar
     CALL EnviarComandoRobot
     MOV AL,5                    ; 5 = encender la lampara
@@ -595,31 +605,37 @@ RondaSiguienteZona:
     RET
 RondaDelRobot ENDP
 
-; Entrada: AL = comando. Lo manda al puerto 9 y espera a que el Robot termine (puerto 11).
-; Los puertos y el significado de los bits son un SUPUESTO por confirmar (memoria, 6.3)
+; Entrada: AL = comando. Puerto 9 = comando, puerto 10 = dato, puerto 11 = estado
+; (bit 0 dato nuevo, bit 1 ocupado, bit 2 el ultimo comando fallo).
+; Si se manda un comando con el Robot ocupado lo rechaza ("busy!"), por eso se espera antes y despues.
 EnviarComandoRobot PROC
+    MOV ComandoRobot,AL
+    CALL EsperarRobotLibre
+    MOV AL,ComandoRobot
     MOV DX,9
     OUT DX,AL
     CALL EsperarUnMomento
-EsperarRobotLibre:
-    MOV DX,11
-    IN AL,DX
-    CMP AL,4
-    JC RobotSinBit2             ; se quitan los bits 2 y 1 para dejar solo el bit 0 (ocupado)
-    SUB AL,4
-RobotSinBit2:
-    CMP AL,2
-    JC RobotSinBit1
-    SUB AL,2
-RobotSinBit1:
-    CMP AL,1
-    JE EsperarRobotLibre        ; bit 0 encendido: sigue ocupado
+    CALL EsperarRobotLibre
     RET
 EnviarComandoRobot ENDP
 
+; Espera hasta que el bit 1 (ocupado) del puerto 11 sea 0
+EsperarRobotLibre PROC
+RobotLeerEstado:
+    MOV DX,11
+    IN AL,DX
+    CMP AL,4
+    JC RobotSinBit2
+    SUB AL,4                    ; se quita el bit 2 (comando fallido)
+RobotSinBit2:
+    CMP AL,2
+    JNC RobotLeerEstado         ; 2 o 3: bit 1 encendido, sigue ocupado
+    RET
+EsperarRobotLibre ENDP
+
 ; Pausa corta para que el Robot alcance a empezar el comando
 EsperarUnMomento PROC
-    MOV CX,3000
+    MOV CX,20000
 EsperarVuelta:
     SUB CX,1
     CMP CX,0

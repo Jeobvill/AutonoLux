@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   StdCtrls, ExtCtrls, ComCtrls, Menus, uConsumo, uConfiguracion, uIluminacion, uContador, uMonitor,
-  uBitacora, uMapa;
+  uBitacora, uMapa, uCalor;
 
 type
   TfrmPrincipal = class(TForm)
@@ -166,7 +166,7 @@ end;
 
 procedure TfrmPrincipal.btn4Click(Sender: TObject);
 begin
-  LanzarEmu('Calor.exe');        { uCalor se enlaza cuando tenga su .dfm }
+  frmCalor.Show;
 end;
 
 procedure TfrmPrincipal.btn6Click(Sender: TObject);

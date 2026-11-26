@@ -157,7 +157,7 @@ const
   NOMBRES: array[0..3] of string = ('Ahorro energ' + #233 + 'tico (Sergio)', 'Margen t' + #233 + 'rmico (Daniel)',
     'Dispersi' + #243 + 'n y potencia (Jes' + #250 + 's)', 'Permanencia promedio (Axel)');
 var
-  Calc, Item: TMenuItem;
+  Calc, Vid, Item: TMenuItem;
   i: Integer;
 begin
   if FMenusListos then Exit;
@@ -173,6 +173,13 @@ begin
     Calc.Add(Item);
   end;
   mmPrincipal.Items.Insert(miAyuda.MenuIndex, Calc);
+  Vid := TMenuItem.Create(mmPrincipal);
+  Vid.Caption := 'Video';
+  Item := TMenuItem.Create(mmPrincipal);
+  Item.Caption := 'Trailer y entrevista';
+  Item.OnClick := miVideoClick;
+  Vid.Add(Item);
+  mmPrincipal.Items.Insert(miAyuda.MenuIndex, Vid);
   Item := TMenuItem.Create(mmPrincipal);
   Item.Caption := 'Trailer y entrevista';
   Item.OnClick := miVideoClick;
